@@ -22,7 +22,7 @@ object Server {
 
     val appStream: (ServiceConfig, DataSource[F]) => Stream[F, ExitCode] = (serviceConfig, dataSource) => {
       Stream.eval(FlywayUpdater(dataSource)).drain ++
-        GithubStream(serviceConfig.gitConfig).drain ++
+        GithubStream(dataSource, serviceConfig.gitConfig).drain ++
         Stream.emit(ExitCode.Success)
     }
 

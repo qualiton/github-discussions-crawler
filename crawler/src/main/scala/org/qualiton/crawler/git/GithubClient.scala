@@ -20,8 +20,19 @@ object GithubClient {
 
   final case class Author(login: String)
 
-  final case class TeamDiscussion(title: String, number: Long, body: String, author: Author, comments_count: Long, html_url: String, created_at: Instant, last_edited_at: Option[Instant])
+  final case class TeamDiscussion(title: String,
+                                  number: Long,
+                                  author: Author,
+                                  comments_count: Long,
+                                  html_url: String,
+                                  created_at: Instant,
+                                  updated_at: Instant)
 
-  final case class TeamDiscussionComments(author: Author, body: String, html_url: String, created_at: Instant, last_edited_at: Option[Instant])
+  final case class TeamDiscussionComments(author: Author,
+                                          number: Long,
+                                          body: String,
+                                          html_url: String,
+                                          created_at: Instant,
+                                          updated_at: Instant)
 
 }

@@ -7,6 +7,7 @@ import ciris.syntax._
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
 import org.qualiton.crawler.common.config
+import org.qualiton.crawler.common.config.SlackConfig.SlackChannelName
 import org.qualiton.crawler.common.config.{DatabaseConfig, GitConfig, SlackConfig}
 
 trait ConfigLoader {
@@ -22,13 +23,16 @@ object DefaultConfigLoader extends ConfigLoader {
 
     loadConfig(
       env[NonEmptyString]("GIT_API_TOKEN"),
+      env[SlackChannelName]("SLACK_DEFAULT_CHANNEL"),
       env[NonEmptyString]("SLACK_TOKEN")
-    ) { (gitApiToken, slackToken) =>
+    ) { (gitApiToken, slackDefaultChannel, slackToken) =>
       ServiceConfig(
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
           apiToken = config.Secret(gitApiToken)),
-        slackConfig = SlackConfig(config.Secret(slackToken)),
+        slackConfig = SlackConfig(
+          defaultChannel = slackDefaultChannel,
+          apiToken = config.Secret(slackToken)),
         databaseConfig =
           DatabaseConfig(
             databaseDriverName = "org.postgresql.Driver",
