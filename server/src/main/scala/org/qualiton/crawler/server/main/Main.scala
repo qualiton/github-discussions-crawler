@@ -1,12 +1,12 @@
 package org.qualiton.crawler.server.main
 
-import cats.effect.IO
-import fs2.{Stream, StreamApp}
+import cats.effect.{ExitCode, IO, IOApp}
+import cats.implicits.toFunctorOps
 import org.qualiton.crawler.server.config.DefaultConfigLoader
 
-object Main extends StreamApp[IO] {
+object Main extends IOApp {
 
-  override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, StreamApp.ExitCode] =
-    Bootstrap.fromConfig(IO(DefaultConfigLoader.loadOrThrow()))
+  override def run(args: List[String]): IO[ExitCode] =
+    Bootstrap.fromConfig(IO(DefaultConfigLoader.loadOrThrow())).compile.drain.as(ExitCode.Success)
 
 }

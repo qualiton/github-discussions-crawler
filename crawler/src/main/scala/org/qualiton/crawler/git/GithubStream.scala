@@ -1,15 +1,17 @@
 package org.qualiton.crawler.git
 
-import cats.effect.{Effect, Sync}
+import cats.effect.{ConcurrentEffect, Sync}
 import fs2.Stream
-import org.http4s.client.blaze.Http1Client
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.qualiton.crawler.common.config.GitConfig
+
+import scala.concurrent.ExecutionContext
 
 object GithubStream {
 
-  def apply[F[_] : Effect](gitConfig: GitConfig): Stream[F, Unit] = {
+  def apply[F[_] : ConcurrentEffect](gitConfig: GitConfig)(implicit ec: ExecutionContext): Stream[F, Unit] = {
     for {
-      client <- Http1Client.stream[F]()
+      client <- BlazeClientBuilder[F](ec).stream
       githubClient = GithubHttp4sClient(client, gitConfig)
       team <- githubClient.getUserTeams()
       discussion <- githubClient.getTeamDiscussions(team.id)

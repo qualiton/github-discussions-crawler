@@ -9,7 +9,7 @@ import io.circe.Decoder
 import io.circe.fs2._
 import io.circe.generic.auto._
 import io.circe.java8.time._
-import org.http4s.MediaType.`application/json`
+import org.http4s.MediaType.application.json
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.headers.{Accept, Authorization}
@@ -36,7 +36,7 @@ class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: Gi
       Request[F](
         method = Method.GET,
         uri = Uri.unsafeFromString(baseUrl) / "user" / "teams",
-        headers = Headers(authorization, Accept(`application/json`)))
+        headers = Headers(authorization, Accept(json)))
 
     sendReceive[UserTeam](request)
   }

@@ -1,17 +1,17 @@
-import sbt.{ Def, _ }
 import sbt.Keys._
+import sbt.{Def, _}
 
 object Dependencies extends AutoPlugin {
 
-  private val CatsVersion = "1.3.1"
-  private val CatsEffectVersion = "0.10.1"
-  private val CirisVersion = "0.6.2"
+  private val CatsVersion = "1.4.0"
+  private val CatsEffectVersion = "1.0.0"
+  private val CirisVersion = "0.11.0"
   private val DockerTestkitVersion = "0.9.6"
-  private val Http4sVersion = "0.18.17"
-  private val DoobieVersion = "0.5.3"
+  private val Http4sVersion = "0.19.0"
+  private val DoobieVersion = "0.6.0-RC1"
   private val RefinedVersion = "0.9.2"
-  private val CirceVersion = "0.9.3"
-  private val MonocleVersion = "1.5.0-cats"
+  private val CirceVersion = "0.10.0"
+  private val MonocleVersion = "1.5.1-cats"
 
   private val cats = Seq(
     "org.typelevel" %% "cats-core" % CatsVersion,
@@ -25,7 +25,7 @@ object Dependencies extends AutoPlugin {
       "refined")
       .map(module => "is.cir" %% s"ciris-$module" % CirisVersion) ++ Seq(
       "com.ovoenergy" %% "ciris-aiven-kafka" % "0.3",
-      "com.ovoenergy" %% "ciris-kubernetes" % "0.1" exclude ("com.google.guava", "guava"))
+      "com.ovoenergy" %% "ciris-kubernetes" % "0.1" exclude("com.google.guava", "guava"))
 
   private val google =
     Seq(
@@ -39,10 +39,9 @@ object Dependencies extends AutoPlugin {
       "literal",
       "java8",
       "generic-extras",
-      "refined")
-      .map(module => "io.circe" %% s"circe-$module" % CirceVersion) ++
-      Seq(
-        "io.circe" %% "circe-fs2" % "0.9.0")
+      "refined",
+      "fs2")
+      .map(module => "io.circe" %% s"circe-$module" % CirceVersion)
 
   private val http4s =
     Seq(
@@ -71,7 +70,7 @@ object Dependencies extends AutoPlugin {
       "com.zaxxer" % "HikariCP" % "2.7.8",
       "org.postgresql" % "postgresql" % "42.2.2",
       "org.flywaydb" % "flyway-core" % "5.0.7",
-      "com.google.cloud.sql" % "postgres-socket-factory" % "1.0.5" exclude ("com.google.guava", "guava-jdk5"))
+      "com.google.cloud.sql" % "postgres-socket-factory" % "1.0.5" exclude("com.google.guava", "guava-jdk5"))
 
   private val monocle =
     Seq(
@@ -119,7 +118,7 @@ object Dependencies extends AutoPlugin {
           http4s ++
           others ++
           logging)
-  
+
   object autoImport {
 
     implicit final class DependenciesProject(val project: Project) extends AnyVal {
@@ -129,5 +128,7 @@ object Dependencies extends AutoPlugin {
           .settings(Resolvers.default)
           .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"))
     }
+
   }
+
 }
