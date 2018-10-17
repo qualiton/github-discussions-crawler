@@ -1,0 +1,4 @@
+CREATE TABLE PUBLIC.discussions (
+  discussion_id VARCHAR NOT NULL,
+  CONSTRAINT PK_DISCUSSION PRIMARY KEY (discussion_id)
+)
