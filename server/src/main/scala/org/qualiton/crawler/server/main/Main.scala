@@ -7,6 +7,6 @@ import org.qualiton.crawler.server.config.DefaultConfigLoader
 object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
-    Bootstrap.fromConfig(IO(DefaultConfigLoader.loadOrThrow())).compile.drain.as(ExitCode.Success)
+    Server.fromConfig(IO(DefaultConfigLoader.loadOrThrow())).compile.drain.as(ExitCode.Success)
 
 }

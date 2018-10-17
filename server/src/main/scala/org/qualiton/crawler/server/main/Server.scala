@@ -9,7 +9,7 @@ import org.qualiton.crawler.flyway.FlywayUpdater
 import org.qualiton.crawler.git.GithubStream
 import org.qualiton.crawler.server.config.ServiceConfig
 
-object Bootstrap {
+object Server {
 
   def fromConfig[F[_] : ConcurrentEffect : ContextShift](loadConfig: F[ServiceConfig]): Stream[F, ExitCode] = {
 
