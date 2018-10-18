@@ -1,14 +1,11 @@
 package org.qualiton.crawler.common.config
 
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.string.MatchesRegex
+import eu.timepit.refined.string.Uri
 import eu.timepit.refined.types.string.NonEmptyString
-import org.qualiton.crawler.common.config.SlackConfig.SlackChannelName
-import shapeless.{Witness => W}
 
-final case class SlackConfig(defaultChannel: SlackChannelName,
+import scala.concurrent.duration.Duration
+
+final case class SlackConfig(baseUrl: String Refined Uri,
+                             requestTimeout: Duration,
                              apiToken: Secret[NonEmptyString])
-
-object SlackConfig {
-  type SlackChannelName = String Refined (MatchesRegex[W.`"#[a-z_\\\\-]+"`.T])
-}

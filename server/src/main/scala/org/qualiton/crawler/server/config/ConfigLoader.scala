@@ -7,7 +7,6 @@ import ciris.syntax._
 import eu.timepit.refined.auto._
 import eu.timepit.refined.types.string.NonEmptyString
 import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.SlackConfig.SlackChannelName
 import org.qualiton.crawler.common.config.{DatabaseConfig, GitConfig, SlackConfig}
 
 import scala.concurrent.duration._
@@ -25,16 +24,16 @@ object DefaultConfigLoader extends ConfigLoader {
 
     loadConfig(
       env[NonEmptyString]("GIT_API_TOKEN"),
-      env[SlackChannelName]("SLACK_DEFAULT_CHANNEL"),
       env[NonEmptyString]("SLACK_TOKEN")
-    ) { (gitApiToken, slackDefaultChannel, slackToken) =>
+    ) { (gitApiToken, slackToken) =>
       ServiceConfig(
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
           requestTimeout = 5.seconds,
           apiToken = config.Secret(gitApiToken)),
         slackConfig = SlackConfig(
-          defaultChannel = slackDefaultChannel,
+          baseUrl = "https://hooks.slack.com/services/",
+          requestTimeout = 5.seconds,
           apiToken = config.Secret(slackToken)),
         databaseConfig =
           DatabaseConfig(
