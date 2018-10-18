@@ -1,11 +1,11 @@
 package org.qualiton.crawler.git
 
 import org.qualiton.crawler.git.GithubClient.{TeamDiscussion, TeamDiscussionComments, UserTeam}
-import org.qualiton.crawler.git.GithubRepository.{SaveResult, TeamDiscussionCommentDetails}
+import org.qualiton.crawler.git.GithubRepository.{Result, TeamDiscussionCommentDetails}
 
 trait GithubRepository[F[_]] {
 
-  def save(teamDiscussionCommentDetails: TeamDiscussionCommentDetails): F[SaveResult]
+  def save(teamDiscussionCommentDetails: TeamDiscussionCommentDetails): F[Result]
 }
 
 object GithubRepository {
@@ -23,12 +23,16 @@ object GithubRepository {
     val channels = Channel.findAllMatchIn(body).toList.map(_.group(1))
   }
 
-  sealed trait SaveResult
+  sealed trait Result
 
-  object CommentAlreadyExists extends SaveResult
+  object CommentAlreadyExists extends Result
 
-  final case class NewDiscussionCreated() extends SaveResult
+  final case class NewDiscussionCreated() extends Result
 
-  final case class NewCommentAdded() extends SaveResult
+  final case class DiscussionDeleted() extends Result
+
+  final case class NewCommentAdded() extends Result
+
+  final case class CommentRemoved() extends Result
 
 }

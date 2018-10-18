@@ -4,10 +4,13 @@ import cats.effect.{ConcurrentEffect, ContextShift, ExitCode}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Stream
+import fs2.concurrent.Queue
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.flyway.FlywayUpdater
+import org.qualiton.crawler.git.GithubRepository.Result
 import org.qualiton.crawler.git.GithubStream
 import org.qualiton.crawler.server.config.ServiceConfig
+import org.qualiton.crawler.slack.SlackStream
 
 object Server {
 
@@ -21,9 +24,15 @@ object Server {
     } yield (config, dataSource)
 
     val appStream: (ServiceConfig, DataSource[F]) => Stream[F, ExitCode] = (serviceConfig, dataSource) => {
-      Stream.eval(FlywayUpdater(dataSource)).drain ++
-        GithubStream(dataSource, serviceConfig.gitConfig).drain ++
-        Stream.emit(ExitCode.Success)
+      val stream: Stream[F, Unit] = for {
+        _ <- Stream.eval(FlywayUpdater(dataSource))
+        queue <- Stream.eval(Queue.bounded[F, Result](100))
+        gitStream = GithubStream(queue, dataSource, serviceConfig.gitConfig)
+        slackStream = SlackStream(queue, serviceConfig.slackConfig)
+        stream <- Stream(gitStream, slackStream).parJoin(2)
+      } yield stream
+
+      stream.drain.as(ExitCode.Success)
     }
 
     val release: DataSource[F] => F[Unit] = _.close

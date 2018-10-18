@@ -10,6 +10,8 @@ import org.qualiton.crawler.common.config
 import org.qualiton.crawler.common.config.SlackConfig.SlackChannelName
 import org.qualiton.crawler.common.config.{DatabaseConfig, GitConfig, SlackConfig}
 
+import scala.concurrent.duration._
+
 trait ConfigLoader {
   final def loadOrThrow(): ServiceConfig =
     load().orThrow()
@@ -29,6 +31,7 @@ object DefaultConfigLoader extends ConfigLoader {
       ServiceConfig(
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
+          requestTimeout = 5.seconds,
           apiToken = config.Secret(gitApiToken)),
         slackConfig = SlackConfig(
           defaultChannel = slackDefaultChannel,

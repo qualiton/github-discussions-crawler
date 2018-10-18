@@ -8,7 +8,7 @@ object Dependencies extends AutoPlugin {
   private val CirisVersion = "0.11.0"
   private val DockerTestkitVersion = "0.9.6"
   private val Http4sVersion = "0.19.0"
-  private val DoobieVersion = "0.6.0-RC1"
+  private val DoobieVersion = "0.6.0"
   private val RefinedVersion = "0.9.2"
   private val CirceVersion = "0.10.0"
   private val MonocleVersion = "1.5.1-cats"

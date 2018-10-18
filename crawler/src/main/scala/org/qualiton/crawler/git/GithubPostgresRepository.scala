@@ -3,13 +3,13 @@ package org.qualiton.crawler.git
 import cats.effect.{ContextShift, Effect, Sync}
 import fs2.Stream
 import org.qualiton.crawler.common.datasource.DataSource
-import org.qualiton.crawler.git.GithubRepository.{CommentAlreadyExists, SaveResult, TeamDiscussionCommentDetails}
+import org.qualiton.crawler.git.GithubRepository.{CommentAlreadyExists, Result, TeamDiscussionCommentDetails}
 
 class GithubPostgresRepository[F[_] : Effect : ContextShift] private(dataSource: DataSource[F]) extends GithubRepository[F] {
 
   println(dataSource)
 
-  override def save(teamDiscussionCommentDetails: TeamDiscussionCommentDetails): F[SaveResult] = {
+  override def save(teamDiscussionCommentDetails: TeamDiscussionCommentDetails): F[Result] = {
     Sync[F].delay {
       import teamDiscussionCommentDetails._
       println(s"${userTeam.name} >> ${teamDiscussion.title} - $addressees - $channels")
