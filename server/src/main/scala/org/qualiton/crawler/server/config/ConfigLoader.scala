@@ -24,8 +24,9 @@ object DefaultConfigLoader extends ConfigLoader {
 
     loadConfig(
       env[NonEmptyString]("GIT_API_TOKEN"),
-      env[NonEmptyString]("SLACK_TOKEN")
-    ) { (gitApiToken, slackToken) =>
+      env[NonEmptyString]("SLACK_TOKEN"),
+      env[Option[Boolean]]("SLACK_DISABLE_PUBLISH")
+    ) { (gitApiToken, slackToken, slackDisablePublish) =>
       ServiceConfig(
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
@@ -34,7 +35,8 @@ object DefaultConfigLoader extends ConfigLoader {
         slackConfig = SlackConfig(
           baseUrl = "https://hooks.slack.com/services/",
           requestTimeout = 5.seconds,
-          apiToken = config.Secret(slackToken)),
+          apiToken = config.Secret(slackToken),
+          enableNotificationPublish = slackDisablePublish.getOrElse(true)),
         databaseConfig =
           DatabaseConfig(
             databaseDriverName = "org.postgresql.Driver",

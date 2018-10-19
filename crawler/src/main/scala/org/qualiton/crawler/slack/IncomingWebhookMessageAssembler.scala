@@ -1,11 +1,44 @@
 package org.qualiton.crawler.slack
 
-import org.qualiton.crawler.git.GithubRepository.Result
-import org.qualiton.crawler.slack.SlackClient.IncomingWebhookMessage
+import cats.syntax.option._
+import org.qualiton.crawler.git.GithubRepository._
+import org.qualiton.crawler.slack.SlackClient.{Attachment, Color, Field, IncomingWebhookMessage}
+import eu.timepit.refined.auto.autoUnwrap
 
 object IncomingWebhookMessageAssembler {
 
-  def toIncomingWebhookMessage(result: Result): IncomingWebhookMessage = ???
+  def toIncomingWebhookMessage(result: Result): Option[IncomingWebhookMessage] = result match {
+    case NewDiscussionCreated(author, title, link, teamName, addresseeList, createdAt) =>
+
+      IncomingWebhookMessage(List(Attachment(
+        color = Color.Good.entryName,
+        author_name = author,
+        title = "New discussion has been opened",
+        title_link = link,
+        text = title,
+        fields =
+          List(
+            Field("Team", teamName, true),
+            Field("Action needed", addresseeList.map(_.value).mkString(", "), false)),
+        ts = createdAt.getEpochSecond))).some
+
+    case NewCommentAdded(author, title, link, teamName, numberOfComments, addresseeList, createdAt) =>
+
+      IncomingWebhookMessage(List(Attachment(
+        color = Color.Good.entryName,
+        author_name = author,
+        title = "New comment has been added",
+        title_link = link,
+        text = title,
+        fields =
+          List(
+            Field("Team", teamName, true),
+            Field("Comments", numberOfComments.toString, true),
+            Field("Action needed", addresseeList.map(_.value).mkString(", "), false)),
+        ts = createdAt.getEpochSecond))).some
+
+    case DiscussionAlreadyExists | CommentAlreadyExists | CommentRemoved => None
+  }
 
   val newDiscussion =
     """
@@ -27,33 +60,6 @@ object IncomingWebhookMessageAssembler {
       |                    "title": "Action needed",
       |                    "value": "@asalvadore, @lachatak",
       |                    "short": false
-      |                }
-      |            ],
-      |            "ts": 123456789
-      |        }
-      |    ]
-      |}
-    """.stripMargin
-
-  val discussionDeleted =
-    """
-      |{
-      |    "attachments": [
-      |        {
-      |            "color": "warning",
-      |			       "author_name": "klachata",
-      |            "title": "Discussion has been deleted",
-      |            "text": "Meeting about Migration service kafka messages",
-      |            "fields": [
-      |                {
-      |                    "title": "Team",
-      |                    "value": "Boost VIBE",
-      |                    "short": true
-      |                },
-      |				         {
-      |                    "title": "Comments",
-      |                    "value": 22,
-      |                    "short": true
       |                }
       |            ],
       |            "ts": 123456789
@@ -93,32 +99,4 @@ object IncomingWebhookMessageAssembler {
       |    ]
       |}
     """.stripMargin
-
-  val commentRemove =
-    """
-      |{
-      |    "attachments": [
-      |        {
-      |            "color": "warning",
-      |			       "author_name": "klachata",
-      |            "title": "Comment has been removed",
-      |            "text": "Meeting about Migration service kafka messages",
-      |			        "fields": [
-      |                {
-      |                    "title": "Team",
-      |                    "value": "Boost VIBE",
-      |                    "short": true
-      |                },
-      |				         {
-      |                    "title": "Comments",
-      |                    "value": 22,
-      |                    "short": true
-      |                }
-      |            ],
-      |			"ts": 123456789
-      |        }
-      |    ]
-      |}
-    """.stripMargin
-
 }

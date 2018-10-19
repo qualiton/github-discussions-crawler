@@ -11,8 +11,18 @@ class GithubPostgresRepository[F[_] : Effect : ContextShift] private(dataSource:
 
   override def save(teamDiscussionCommentDetails: TeamDiscussionCommentDetails): F[Result] = {
     Sync[F].delay {
-      import teamDiscussionCommentDetails._
-      println(s"${userTeam.name} >> ${teamDiscussion.title} - $addressees - $channels")
+      //TODO implement repository
+
+
+      //  private val Addressee = "(@[0-9a-zA-Z]+)".r
+      //  private val Channel = """(#[a-z_\\-]+)""".r
+      //
+      //  import teamDiscussionComments._
+      //
+      //  val addressees = Addressee.findAllMatchIn(body).toList.map(_.group(1))
+      //  val channels = Channel.findAllMatchIn(body).toList.map(_.group(1))
+
+      println(teamDiscussionCommentDetails)
       CommentAlreadyExists
     }
   }

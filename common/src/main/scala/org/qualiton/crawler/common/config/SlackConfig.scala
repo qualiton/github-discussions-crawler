@@ -8,4 +8,5 @@ import scala.concurrent.duration.Duration
 
 final case class SlackConfig(baseUrl: String Refined Uri,
                              requestTimeout: Duration,
-                             apiToken: Secret[NonEmptyString])
+                             apiToken: Secret[NonEmptyString],
+                             enableNotificationPublish: Boolean)

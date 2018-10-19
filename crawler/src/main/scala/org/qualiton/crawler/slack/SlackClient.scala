@@ -3,7 +3,7 @@ package org.qualiton.crawler.slack
 import enumeratum.{CirceEnum, Enum, EnumEntry}
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto.autoUnwrap
-import eu.timepit.refined.string.{MatchesRegex, Uri}
+import eu.timepit.refined.string.MatchesRegex
 import org.http4s.Status
 import org.qualiton.crawler.slack.SlackClient.IncomingWebhookMessage
 import shapeless.{Witness => W}
@@ -37,9 +37,10 @@ object SlackClient {
                          value: String,
                          short: Boolean)
 
-  final case class Attachment(color: Color,
+  final case class Attachment(color: String,
+                              author_name: String,
                               title: String,
-                              title_link: String Refined Uri,
+                              title_link: String,
                               text: String,
                               fields: List[Field],
                               ts: Long)

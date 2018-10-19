@@ -1,6 +1,8 @@
 package org.qualiton.crawler.slack
 
 import cats.effect.ConcurrentEffect
+import cats.instances.option._
+import cats.syntax.traverse._
 import fs2.Stream
 import fs2.concurrent.Queue
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -20,7 +22,11 @@ object SlackStream {
       client <- BlazeClientBuilder[F](ec).withRequestTimeout(slackConfig.requestTimeout).stream
       slackClient <- SlackHttp4sClient.stream(client, slackConfig)
       result <- queue.dequeue
-      _ <- Stream.eval(slackClient.sendIncomingWebhookMessage(toIncomingWebhookMessage(result)))
+      _ <-
+        if (slackConfig.enableNotificationPublish)
+          Stream.eval(toIncomingWebhookMessage(result) traverse slackClient.sendIncomingWebhookMessage)
+        else
+          Stream.empty
     } yield ()
   }
 }

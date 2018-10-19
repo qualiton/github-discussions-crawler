@@ -1,7 +1,12 @@
 package org.qualiton.crawler.git
 
+import java.time.Instant
+
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.string.{MatchesRegex, Uri}
 import org.qualiton.crawler.git.GithubClient.{TeamDiscussion, TeamDiscussionComments, UserTeam}
 import org.qualiton.crawler.git.GithubRepository.{Result, TeamDiscussionCommentDetails}
+import shapeless.{Witness => W}
 
 trait GithubRepository[F[_]] {
 
@@ -12,27 +17,31 @@ object GithubRepository {
 
   final case class TeamDiscussionCommentDetails(userTeam: UserTeam,
                                                 teamDiscussion: TeamDiscussion,
-                                                teamDiscussionComments: TeamDiscussionComments) {
+                                                teamDiscussionComments: TeamDiscussionComments)
 
-    private val Addressee = "(@[0-9a-zA-Z]+)".r
-    private val Channel = """(#[a-z_\\-]+)""".r
-
-    import teamDiscussionComments._
-
-    val addressees = Addressee.findAllMatchIn(body).toList.map(_.group(1))
-    val channels = Channel.findAllMatchIn(body).toList.map(_.group(1))
-  }
+  type Addressee = String Refined (MatchesRegex[W.`"@[a-z]+"`.T])
 
   sealed trait Result
 
+  final case class NewDiscussionCreated(author: String,
+                                        title: String,
+                                        link: String Refined Uri,
+                                        teamName: String,
+                                        addressee: List[Addressee],
+                                        createdAt: Instant) extends Result
+
+  object DiscussionAlreadyExists extends Result
+
+  final case class NewCommentAdded(author: String,
+                                   title: String,
+                                   link: String Refined Uri,
+                                   teamName: String,
+                                   numberOfComments: Int,
+                                   addressee: List[Addressee],
+                                   createdAt: Instant) extends Result
+
   object CommentAlreadyExists extends Result
 
-  final case class NewDiscussionCreated() extends Result
-
-  final case class DiscussionDeleted() extends Result
-
-  final case class NewCommentAdded() extends Result
-
-  final case class CommentRemoved() extends Result
+  object CommentRemoved extends Result
 
 }
