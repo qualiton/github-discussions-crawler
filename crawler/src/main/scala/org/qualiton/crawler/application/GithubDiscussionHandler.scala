@@ -51,6 +51,8 @@ class GithubDiscussionHandler[F[_] : Effect] private(eventQueue: Queue[F, Event]
 }
 
 object GithubDiscussionHandler {
+
   def stream[F[_] : Effect](eventQueue: Queue[F, Event], githubClient: GithubClient[F], githubRepository: GithubRepository[F]): Stream[F, GithubDiscussionHandler[F]] =
     Stream.eval(Sync[F].delay(new GithubDiscussionHandler(eventQueue, githubClient, githubRepository)))
+
 }

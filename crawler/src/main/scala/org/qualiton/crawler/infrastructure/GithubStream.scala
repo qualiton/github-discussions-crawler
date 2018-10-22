@@ -19,7 +19,8 @@ object GithubStream {
                                                     gitConfig: GitConfig,
                                                     loggerErrorHandler: Throwable => F[Unit])
                                                    (implicit ec: ExecutionContext): Stream[F, Unit] = {
-    val program = for {
+
+    val program: Stream[F, Either[Throwable, Unit]] = for {
       githubClient <- GithubHttp4sClient.stream(gitConfig)
       repository <- GithubPostgresRepository.stream(dataSource)
       handler <- GithubDiscussionHandler.stream(eventQueue, githubClient, repository)
