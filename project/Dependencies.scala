@@ -89,6 +89,7 @@ object Dependencies extends AutoPlugin {
     Seq(
       "eu.timepit" %% "refined" % RefinedVersion,
       "eu.timepit" %% "refined-cats" % RefinedVersion,
+      "io.scalaland" %% "chimney" % "0.2.1",
       "org.scalactic" %% "scalactic" % "3.0.5")
 
   private val test =

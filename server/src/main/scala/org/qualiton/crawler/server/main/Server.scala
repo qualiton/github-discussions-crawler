@@ -1,22 +1,24 @@
 package org.qualiton.crawler.server.main
 
-import cats.effect.{ConcurrentEffect, ContextShift, ExitCode}
+import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import com.typesafe.scalalogging.LazyLogging
 import fs2.Stream
 import fs2.concurrent.Queue
 import org.qualiton.crawler.common.datasource.DataSource
+import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.flyway.FlywayUpdater
-import org.qualiton.crawler.git.GithubRepository.Result
-import org.qualiton.crawler.git.GithubStream
+import org.qualiton.crawler.infrastructure.{GithubStream, SlackStream}
 import org.qualiton.crawler.server.config.ServiceConfig
-import org.qualiton.crawler.slack.SlackStream
 
-object Server {
+object Server extends LazyLogging {
 
   def fromConfig[F[_] : ConcurrentEffect : ContextShift](loadConfig: F[ServiceConfig]): Stream[F, ExitCode] = {
 
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+    val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => Sync[F].delay(logger.error(t.getMessage, t))
 
     val init = for {
       config <- loadConfig
@@ -26,10 +28,12 @@ object Server {
     val appStream: (ServiceConfig, DataSource[F]) => Stream[F, ExitCode] = (serviceConfig, dataSource) => {
       val stream: Stream[F, Unit] = for {
         _ <- Stream.eval(FlywayUpdater(dataSource))
-        queue <- Stream.eval(Queue.bounded[F, Result](100))
-        gitStream = GithubStream(queue, dataSource, serviceConfig.gitConfig)
-        slackStream = SlackStream(queue, serviceConfig.slackConfig)
-        stream <- Stream(gitStream, slackStream).parJoin(2)
+        eventQueue <- Stream.eval(Queue.bounded[F, Event](100))
+        gitStream = GithubStream(eventQueue, dataSource, serviceConfig.gitConfig, loggerErrorHandler)
+        slackStream = SlackStream(eventQueue, serviceConfig.slackConfig)
+        stream <- Stream(gitStream, slackStream)
+          .parJoin(2)
+          .handleErrorWith(t => Stream.eval_(loggerErrorHandler(t)))
       } yield stream
 
       stream.drain.as(ExitCode.Success)

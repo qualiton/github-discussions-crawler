@@ -1,14 +1,13 @@
-package org.qualiton.crawler.slack
+package org.qualiton.crawler.infrastructure.http.slack
 
-import cats.syntax.option._
-import org.qualiton.crawler.git.GithubRepository._
-import org.qualiton.crawler.slack.SlackClient.{Attachment, Color, Field, IncomingWebhookMessage}
 import eu.timepit.refined.auto.autoUnwrap
+import org.qualiton.crawler.domain.core.{Event, NewCommentAddedEvent, NewDiscussionCreatedEvent}
+import org.qualiton.crawler.infrastructure.http.slack.SlackHttp4sClient.{Attachment, Color, Field, IncomingWebhookMessage}
 
 object IncomingWebhookMessageAssembler {
 
-  def toIncomingWebhookMessage(result: Result): Option[IncomingWebhookMessage] = result match {
-    case NewDiscussionCreated(author, title, link, teamName, addresseeList, createdAt) =>
+  def fromDomain(event: Event): IncomingWebhookMessage = event match {
+    case NewDiscussionCreatedEvent(author, title, link, teamName, addresseeList, createdAt) =>
 
       IncomingWebhookMessage(List(Attachment(
         color = Color.Good.entryName,
@@ -20,9 +19,9 @@ object IncomingWebhookMessageAssembler {
           List(
             Field("Team", teamName, true),
             Field("Action needed", addresseeList.map(_.value).mkString(", "), false)),
-        ts = createdAt.getEpochSecond))).some
+        ts = createdAt.getEpochSecond)))
 
-    case NewCommentAdded(author, title, link, teamName, numberOfComments, addresseeList, createdAt) =>
+    case NewCommentAddedEvent(author, title, link, teamName, numberOfComments, addresseeList, createdAt) =>
 
       IncomingWebhookMessage(List(Attachment(
         color = Color.Good.entryName,
@@ -35,9 +34,8 @@ object IncomingWebhookMessageAssembler {
             Field("Team", teamName, true),
             Field("Comments", numberOfComments.toString, true),
             Field("Action needed", addresseeList.map(_.value).mkString(", "), false)),
-        ts = createdAt.getEpochSecond))).some
+        ts = createdAt.getEpochSecond)))
 
-    case DiscussionAlreadyExists | CommentAlreadyExists | CommentRemoved => None
   }
 
   val newDiscussion =
