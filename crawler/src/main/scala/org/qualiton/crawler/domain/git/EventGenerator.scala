@@ -1,30 +1,49 @@
 package org.qualiton.crawler.domain.git
 
+import _root_.cats.data.NonEmptyList
+import _root_.cats.syntax.option._
 import cats.effect.Sync
-import org.qualiton.crawler.domain.core.Event
+import eu.timepit.refined._
+import org.qualiton.crawler.domain.core._
 
 object EventGenerator {
 
-  def generateEvent[F[_] : Sync](previousDiscussionDetails: Option[TeamDiscussionDetails], currentTeamDiscussionDetails: TeamDiscussionDetails): F[Event] = ???
+  def generateEvent[F[_] : Sync](maybePrevious: Option[TeamDiscussionDetails], current: TeamDiscussionDetails): F[Option[Event]] =
+    Sync[F].delay {
+
+      def generateNewDiscussionDiscoveredEvent(currentTeamDiscussionDetails: TeamDiscussionDetails): NewDiscussionDiscoveredEvent = {
+        import currentTeamDiscussionDetails._
+        NewDiscussionDiscoveredEvent(
+          author = discussion.author,
+          title = discussion.title,
+          url = discussion.url,
+          teamName = team.name,
+          totalCommentsCount = discussion.commentsCount,
+          addressees = discussion.addressees.map(refineV[AddresseeSpec](_).getOrElse(throw new IllegalStateException())),
+          createdAt = discussion.createdAt)
+      }
+
+      maybePrevious.fold[Option[Event]](generateNewDiscussionDiscoveredEvent(current).some) { previous =>
+        if (current.comments.size > previous.comments.size) {
+
+          import current._
+          val newCurrentComments = comments.drop(previous.comments.size)
+            .map(c => NewComment(
+              author = c.author,
+              url = c.url,
+              addressees = c.addressees.map(refineV[AddresseeSpec](_).getOrElse(throw new IllegalStateException())),
+              createdAt = c.createdAt))
+
+          NewCommentsDiscoveredEvent(
+            teamName = team.name,
+            title = discussion.title,
+            totalCommentsCount = discussion.commentsCount,
+            comments = NonEmptyList(newCurrentComments.head, newCurrentComments.tail)).some
+
+        } else {
+          none[Event]
+        }
+      }
+    }
 }
 
-//private def generateEvent(previousDiscussionDetails: Option[TeamDiscussionDetails], currentTeamDiscussionDetails: TeamDiscussionDetails): F[Event] = {
-//
-//  //  private val Addressee = "(@[0-9a-zA-Z]+)".r
-//  //  private val Channel = """(#[a-z_\\-]+)""".r
-//  //
-//  //  import teamDiscussionComments._
-//  //
-//  //  val addressees = Addressee.findAllMatchIn(body).toList.map(_.group(1))
-//  //  val channels = Channel.findAllMatchIn(body).toList.map(_.group(1))
-//  def generateNewDiscussionCreatedEvent(currentTeamDiscussionDetails: TeamDiscussionDetails): NewDiscussionCreatedEvent =
-//  NewDiscussionCreatedEvent(
-//  author = currentTeamDiscussionDetails.discussion.author,
-//  title = currentTeamDiscussionDetails.discussion.title,
-//  url = currentTeamDiscussionDetails.discussion.url,
-//  teamName = currentTeamDiscussionDetails.team.name,
-//  addressee = List(),
-//  createdAt = currentTeamDiscussionDetails.discussion.createdAt)
-//
-//  previousDiscussionDetails.fold(generateNewDiscussionCreatedEvent(currentTeamDiscussionDetails))
-//}

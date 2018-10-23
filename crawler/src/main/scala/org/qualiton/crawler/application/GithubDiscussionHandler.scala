@@ -2,6 +2,8 @@ package org.qualiton.crawler.application
 
 import cats.data.EitherT
 import cats.effect.{Effect, Sync}
+import cats.instances.option._
+import cats.syntax.traverse._
 import fs2.Stream
 import fs2.concurrent.Queue
 import org.qualiton.crawler.domain.core.Event
@@ -18,7 +20,7 @@ class GithubDiscussionHandler[F[_] : Effect] private(eventQueue: Queue[F, Event]
       maybePreviousDiscussionDetails <- EitherT(Stream.eval(githubRepository.find(currentDiscussionDetails.team.id, currentDiscussionDetails.discussion.id)))
       event <- EitherT.liftF(Stream.eval(EventGenerator.generateEvent(maybePreviousDiscussionDetails, currentDiscussionDetails)))
       _ <- EitherT.liftF(Stream.eval(githubRepository.save(currentDiscussionDetails)))
-      _ <- EitherT.liftF(Stream.eval(eventQueue.enqueue1(event)))
+      _ <- EitherT.liftF(Stream.eval(event.traverse(eventQueue.enqueue1)))
     } yield ()
 
     program.value
