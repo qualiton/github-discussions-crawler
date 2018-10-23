@@ -13,20 +13,19 @@ import doobie.util.update.{Update, Update0}
 import fs2.Stream
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.git.{GithubRepository, TeamDiscussionDetails}
+import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{selectLatestUpdatedAt, selectTeamDiscussionCommentsQuery, selectTeamDiscussionQuery}
 
 class GithubPostgresRepository[F[_] : Effect : ContextShift] private(dataSource: DataSource[F]) extends GithubRepository[F] {
 
   private val transactor = dataSource.hikariTransactor
 
-  override def findLastUpdatedAt: F[Option[Instant]] =
-    Sync[F].delay {
-      Some(Instant.now())
-    }
+  override def findLastUpdatedAt: F[Instant] =
+    selectLatestUpdatedAt.unique.transact(transactor)
 
   override def find(teamId: Long, discussionId: Long): F[Either[Throwable, Option[TeamDiscussionDetails]]] = {
     val find: ConnectionIO[Option[TeamDiscussionDetails]] = for {
-      maybeDiscussion <- GithubPostgresRepository.selectTeamDiscussionQuery(teamId, discussionId).option
-      comments <- GithubPostgresRepository.selectTeamDiscussionCommentsQuery(teamId, discussionId).to[List]
+      maybeDiscussion <- selectTeamDiscussionQuery(teamId, discussionId).option
+      comments <- selectTeamDiscussionCommentsQuery(teamId, discussionId).to[List]
       maybeTeamDiscussionDetails <- delay(maybeDiscussion.flatMap(d => GithubPostgresAssembler.toDomain(d, comments).toOption))
     } yield maybeTeamDiscussionDetails
 
@@ -119,18 +118,20 @@ object GithubPostgresRepository {
   def insertTeamDiscussionCommentsBatch(teamDiscussionCommentPersistenceList: List[TeamDiscussionCommentPersistence]): ConnectionIO[Int] = {
     val sql =
       """INSERT INTO comment (team_id, discussion_id, comment_id, author, body, body_version, url, created_at)
-         VALUES(?, ?, ?,  ?, ?, ?, ?, ?)
+         VALUES(?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT ON CONSTRAINT PK_COMMENT DO UPDATE
          SET body = EXCLUDED.body,
              body_version = EXCLUDED.$bodyVersion,
+             author = EXCLUDED.author,
+             url = EXCLUDED.url,
              refreshed_at = now()"""
 
     Update[TeamDiscussionCommentPersistence](sql).updateMany(teamDiscussionCommentPersistenceList)
   }
 
-  def selectLatestUpdatedAt(): Query0[Instant] =
+  def selectLatestUpdatedAt: Query0[Instant] =
     sql"""
-         SELECT MAX(updated_at) as updated_at
+         SELECT COALESCE(MAX(updated_at), (now() - INTERVAL `10 year`)) as updated_at
             (SELECT updated_at
               FROM team
              UNION
