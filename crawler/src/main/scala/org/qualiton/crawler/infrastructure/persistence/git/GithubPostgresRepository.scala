@@ -1,19 +1,23 @@
-package org.qualiton.crawler.infrastructure.persistence.git
+package org.qualiton.crawler.infrastructure.persistence
+package git
 
 import java.time.Instant
 
-import cats.effect.{ContextShift, Effect, Sync}
-import cats.instances.list._
+import cats.effect.{ ContextShift, Effect, Sync }
 import cats.syntax.applicativeError._
 import cats.syntax.functor._
-import doobie.free.connection.{ConnectionIO, delay}
+import fs2.Stream
+
+import doobie.Meta
+import doobie.free.connection.{ delay, ConnectionIO }
 import doobie.implicits._
 import doobie.util.query.Query0
-import doobie.util.update.{Update, Update0}
-import fs2.Stream
+import doobie.util.update.Update0
+import io.circe.generic.auto._
 import org.qualiton.crawler.common.datasource.DataSource
-import org.qualiton.crawler.domain.git.{GithubRepository, TeamDiscussionDetails}
-import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{selectLatestUpdatedAt, selectTeamDiscussionCommentsQuery, selectTeamDiscussionQuery}
+import org.qualiton.crawler.domain.git.{ GithubRepository, TeamDiscussionDetails }
+import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ selectLatestUpdatedAt, selectTeamDiscussionDetailsQuery }
+import org.qualiton.crawler.infrastructure.persistence.meta.codecMeta
 
 class GithubPostgresRepository[F[_] : Effect : ContextShift] private(dataSource: DataSource[F]) extends GithubRepository[F] {
 
@@ -24,26 +28,17 @@ class GithubPostgresRepository[F[_] : Effect : ContextShift] private(dataSource:
 
   override def find(teamId: Long, discussionId: Long): F[Either[Throwable, Option[TeamDiscussionDetails]]] = {
     val find: ConnectionIO[Option[TeamDiscussionDetails]] = for {
-      maybeDiscussion <- selectTeamDiscussionQuery(teamId, discussionId).option
-      comments <- selectTeamDiscussionCommentsQuery(teamId, discussionId).to[List]
-      maybeTeamDiscussionDetails <- delay(maybeDiscussion.flatMap(d => GithubPostgresAssembler.toDomain(d, comments).toOption))
+      maybeDiscussion <- selectTeamDiscussionDetailsQuery(teamId, discussionId).option
+      maybeTeamDiscussionDetails <- delay(maybeDiscussion.flatMap(d => GithubPostgresAssembler.toDomain(d).toOption))
     } yield maybeTeamDiscussionDetails
 
     find.transact(transactor).attempt
   }
 
   override def save(teamDiscussionDetails: TeamDiscussionDetails): F[Either[Throwable, Unit]] = {
-
-    import teamDiscussionDetails._
-
     val save: ConnectionIO[Unit] = for {
-      newUserTeam <- delay(GithubPostgresAssembler.toUserTeamPersistence(team))
-      newTeamDiscussion <- delay(GithubPostgresAssembler.toTeamDiscussionPersistence(newUserTeam.teamId, discussion))
-      newTeamDiscussionComments <-
-        delay(comments.map(GithubPostgresAssembler.toTeamDiscussionCommentPersistence(newUserTeam.teamId, newTeamDiscussion.discussionId, _)))
-      _ <- GithubPostgresRepository.insertTeamUpdate(newUserTeam).run.void
-      _ <- GithubPostgresRepository.insertTeamDiscussionUpdate(newTeamDiscussion).run.void
-      _ <- GithubPostgresRepository.insertTeamDiscussionCommentsBatch(newTeamDiscussionComments).void
+      newTeamDiscussion <- delay(GithubPostgresAssembler.toTeamDiscussionDetailsPersistence(teamDiscussionDetails))
+      _ <- GithubPostgresRepository.insertTeamDiscussionDetailsUpdate(newTeamDiscussion).run.void
     } yield ()
 
     save.transact(transactor).attempt
@@ -55,89 +50,65 @@ object GithubPostgresRepository {
   def stream[F[_] : Effect : ContextShift](dataSource: DataSource[F]): Stream[F, GithubRepository[F]] =
     Stream.eval(Sync[F].delay(new GithubPostgresRepository[F](dataSource)))
 
-  final case class UserTeamPersistence(teamId: Long,
-                                       name: String,
-                                       createdAt: Instant,
-                                       updatedAt: Instant)
-
-  final case class TeamDiscussionPersistence(teamId: Long,
-                                             discussionId: Long,
-                                             title: String,
-                                             author: String,
-                                             body: String,
-                                             bodyVersion: String,
-                                             commentsCount: Long,
-                                             url: String,
-                                             createdAt: Instant,
-                                             updatedAt: Instant)
+  final case class TeamDiscussionDetailsPersistence(
+      teamId: Long,
+      teamName: String,
+      discussionId: Long,
+      title: String,
+      author: String,
+      body: String,
+      bodyVersion: String,
+      commentsCount: Long,
+      url: String,
+      comments: CommentsListPersistence,
+      createdAt: Instant,
+      updatedAt: Instant)
 
 
-  final case class TeamDiscussionCommentPersistence(teamId: Long,
-                                                    discussionId: Long,
-                                                    commentId: Long,
-                                                    author: String,
-                                                    body: String,
-                                                    bodyVersion: String,
-                                                    url: String,
-                                                    createdAt: Instant)
+  final case class CommentsListPersistence(comments: List[CommentPersistence])
 
-  def insertTeamUpdate(userTeamPersistence: UserTeamPersistence): Update0 = {
-    import userTeamPersistence._
-    sql"""
-          INSERT INTO team (team_id, name, created_at, updated_at) VALUES($teamId, $name, $createdAt, $updatedAt)
-          ON CONFLICT ON CONSTRAINT PK_TEAM DO UPDATE
-          SET name = $name, refreshed_at = now()""".update
+  final case class CommentPersistence(
+      commentId: Long,
+      author: String,
+      body: String,
+      bodyVersion: String,
+      url: String,
+      createdAt: Instant)
+
+  object CommentsListPersistence {
+
+    implicit val transactionDetailsMeta: Meta[CommentsListPersistence] = codecMeta[CommentsListPersistence]
   }
 
-  def selectTeamDiscussionQuery(teamId: Long, discussionId: Long): Query0[TeamDiscussionPersistence] =
+  def insertTeamDiscussionDetailsUpdate(teamDiscussionDetailsPersistence: TeamDiscussionDetailsPersistence): Update0 = {
+    import teamDiscussionDetailsPersistence._
     sql"""
-          SELECT team_id, discussion_id, title, author, body, body_version, comments_count, url, created_at, updated_at
-          FROM discussion
-          WHERE team_id = $teamId AND discussion_id = $discussionId""".query
-
-  def insertTeamDiscussionUpdate(teamDiscussionPersistence: TeamDiscussionPersistence): Update0 = {
-    import teamDiscussionPersistence._
-    sql"""
-          INSERT INTO discussion (team_id, discussion_id, title, author, body, body_version, comments_count, url, created_at, updated_at)
-          VALUES($teamId, $discussionId, $title, $author, $body, $bodyVersion, $commentsCount, $url, $createdAt, $updatedAt)
+          INSERT INTO discussion (team_id, team_name, discussion_id, title, author, body, body_version, comments_count, url, comments, created_at, updated_at)
+          VALUES($teamId, $teamName, $discussionId, $title, $author, $body, $bodyVersion, $commentsCount, $url, $comments, $createdAt, $updatedAt)
           ON CONFLICT ON CONSTRAINT PK_DISCUSSION DO UPDATE
-          SET title = $title,
-            comments_count = $commentsCount,
-            body = $body,
-            body_version = $bodyVersion,
-            updated_at = $updatedAt,
-            refreshed_at = now()""".update
+          SET
+              team_name = $teamName,
+              title = $title,
+              comments_count = $commentsCount,
+              body = $body,
+              body_version = $bodyVersion,
+              comments_count = $commentsCount,
+              url = $url,
+              comments = $comments,
+              updated_at = $updatedAt,
+              refreshed_at = now()""".update
   }
 
-  def selectTeamDiscussionCommentsQuery(teamId: Long, discussionId: Long): Query0[TeamDiscussionCommentPersistence] =
+  def selectTeamDiscussionDetailsQuery(teamId: Long, discussionId: Long): Query0[TeamDiscussionDetailsPersistence] =
     sql"""
-          SELECT team_id, discussion_id, comment_id, author, body, body_version, url, created_at, updated_at
-          FROM comment
-          WHERE team_id = $teamId AND discussion_id = $discussionId""".query
-
-  def insertTeamDiscussionCommentsBatch(teamDiscussionCommentPersistenceList: List[TeamDiscussionCommentPersistence]): ConnectionIO[Int] = {
-    val sql =
-      """INSERT INTO comment (team_id, discussion_id, comment_id, author, body, body_version, url, created_at)
-         VALUES(?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT ON CONSTRAINT PK_COMMENT DO UPDATE
-         SET body = EXCLUDED.body,
-             body_version = EXCLUDED.$bodyVersion,
-             author = EXCLUDED.author,
-             url = EXCLUDED.url,
-             refreshed_at = now()"""
-
-    Update[TeamDiscussionCommentPersistence](sql).updateMany(teamDiscussionCommentPersistenceList)
-  }
+          SELECT team_id, team_name, discussion_id, title, author, body, body_version, comments_count, url, comments, created_at, updated_at
+          FROM discussion
+          WHERE team_id = $teamId AND discussion_id = $discussionId
+      """.query[TeamDiscussionDetailsPersistence]
 
   def selectLatestUpdatedAt: Query0[Instant] =
     sql"""
-         SELECT COALESCE(MAX(updated_at), (now() - INTERVAL `10 year`)) as updated_at
-            (SELECT updated_at
-              FROM team
-             UNION
-             SELECT updated_at
-              FROM discussion
-             UNION
-             SELECT updated_at
-              FROM comment) as updated_at""".query[Instant]
+         SELECT COALESCE(MAX(updated_at), (now() - INTERVAL `10 year`))
+         FROM discussion
+      """.query[Instant]
 }

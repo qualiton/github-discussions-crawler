@@ -9,9 +9,7 @@ import org.qualiton.crawler.domain.core.Url
 package git {
 
   final case class Team(id: Long,
-                        name: NonEmptyString,
-                        createdAt: Instant,
-                        updatedAt: Instant)
+      name: NonEmptyString)
 
   sealed trait Targetable {
     private val Addressee = "(@[0-9a-zA-Z]+)".r
@@ -42,5 +40,6 @@ package git {
                                          discussion: Discussion,
                                          comments: List[Comment])
 
+  case class ValidationError(message: String) extends IllegalStateException(message)
 
 }
