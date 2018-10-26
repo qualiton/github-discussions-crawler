@@ -5,6 +5,7 @@ import scala.concurrent.ExecutionContext
 import cats.effect.{ ConcurrentEffect, Effect, Sync }
 import fs2.Stream
 
+import com.typesafe.scalalogging.LazyLogging
 import enumeratum.{ CirceEnum, Enum, EnumEntry }
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto.autoUnwrap
@@ -24,16 +25,19 @@ import org.qualiton.crawler.domain.slack.SlackClient
 import org.qualiton.crawler.infrastructure.http.slack.IncomingWebhookMessageAssembler.fromDomain
 import shapeless.{ Witness => W }
 
-class SlackHttp4sClient[F[_] : Effect] private(client: Client[F], slackConfig: SlackConfig) extends SlackClient[F] with Http4sClientDsl[F] {
+class SlackHttp4sClient[F[_] : Effect] private(client: Client[F], slackConfig: SlackConfig) extends SlackClient[F] with Http4sClientDsl[F] with LazyLogging {
 
   import slackConfig._
 
   override def sendDiscussionEvent(event: Event): F[Status] = {
+    val requestBody = fromDomain(event).asJson
+
     val request = Request[F](
       method = Method.POST,
-      uri = Uri.unsafeFromString(baseUrl).withPath(apiToken.value),
-      headers = Headers(Accept(json))).withEntity(fromDomain(event).asJson)
+      uri = apiToken.value.split("/").foldLeft(Uri.unsafeFromString(baseUri))(_ / _),
+      headers = Headers(Accept(json))).withEntity(requestBody)
 
+    logger.info(s"sending to ${ request.uri } - $requestBody")
     client.status(request)
   }
 }
@@ -68,11 +72,12 @@ object SlackHttp4sClient {
       short: Boolean)
 
   final case class Attachment(
+      pretext: String,
       color: String,
       author_name: String,
+      author_icon: String,
       title: String,
       title_link: String,
-      text: String,
       fields: List[Field],
       ts: Long)
 

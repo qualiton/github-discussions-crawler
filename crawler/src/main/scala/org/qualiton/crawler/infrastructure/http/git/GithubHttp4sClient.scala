@@ -32,7 +32,7 @@ class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: Gi
   private def request(path: String, acceptHeader: Header): Request[F] =
     Request[F](
       method = Method.GET,
-      uri = Uri.unsafeFromString(baseUrl).withPath(path),
+      uri = Uri.unsafeFromString(baseUrl).withPath(path).withQueryParam("direction", "asc"),
       headers = Headers(authorization, acceptHeader))
 
   private def sendReceive[A: Decoder](request: Request[F]): Stream[F, A] = {
@@ -51,6 +51,7 @@ class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: Gi
   private def getTeamDiscussionComments(teamId: Long, discussionId: Long): Stream[F, TeamDiscussionCommentResponse] =
     sendReceive[TeamDiscussionCommentResponse](request(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader))
 
+  //TODO fix filtering
   def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Either[Throwable, Discussion]] =
     for {
       team <- getUserTeams()
@@ -65,7 +66,7 @@ object GithubHttp4sClient {
       id: Long,
       name: String)
 
-  final case class Author(login: String)
+  final case class Author(login: String, avatar_url: String)
 
   final case class TeamDiscussionResponse(
       title: String,

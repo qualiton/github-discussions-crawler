@@ -15,11 +15,12 @@ object EventGenerator {
       def generateNewDiscussionDiscoveredEvent(currentDiscussion: Discussion): NewDiscussionDiscoveredEvent = {
         NewDiscussionDiscoveredEvent(
           author = currentDiscussion.author,
+          avatarUrl = currentDiscussion.avatarUrl,
           title = currentDiscussion.title,
-          url = currentDiscussion.url,
+          discussionUrl = currentDiscussion.discussionUrl,
           teamName = currentDiscussion.teamName,
           totalCommentsCount = currentDiscussion.comments.size,
-          addressees = currentDiscussion.addressees.map(refineV[AddresseeSpec](_).getOrElse(throw new IllegalStateException())),
+          addressees = currentDiscussion.addressees.map(refineV[AddresseeSpec](_).toOption).flatten,
           createdAt = currentDiscussion.createdAt)
       }
 
@@ -30,15 +31,17 @@ object EventGenerator {
           val newCurrentComments = comments.drop(previous.comments.size)
             .map(c => NewComment(
               author = c.author,
-              url = c.url,
-              addressees = c.addressees.map(refineV[AddresseeSpec](_).getOrElse(throw new IllegalStateException())),
+              avatarUrl = c.avatarUrl,
+              commentUrl = c.commentUrl,
+              addressees = c.addressees.map(refineV[AddresseeSpec](_).toOption).flatten,
               createdAt = c.createdAt))
 
           NewCommentsDiscoveredEvent(
             teamName = teamName,
             title = title,
             totalCommentsCount = comments.size,
-            comments = NonEmptyList(newCurrentComments.head, newCurrentComments.tail)).some
+            newComments = NonEmptyList(newCurrentComments.head, newCurrentComments.tail),
+            createdAt = newCurrentComments.map(_.createdAt).max).some
 
         } else {
           none[Event]

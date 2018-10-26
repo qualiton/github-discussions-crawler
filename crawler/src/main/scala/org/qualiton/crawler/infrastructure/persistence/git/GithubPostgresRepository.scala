@@ -56,9 +56,10 @@ object GithubPostgresRepository {
       discussionId: Long,
       title: String,
       author: String,
+      avatarUrl: String,
       body: String,
       bodyVersion: String,
-      url: String,
+      discussionUrl: String,
       comments: CommentsListPersistence,
       createdAt: Instant,
       updatedAt: Instant)
@@ -69,9 +70,10 @@ object GithubPostgresRepository {
   final case class CommentPersistence(
       commentId: Long,
       author: String,
+      avatarUrl: String,
       body: String,
       bodyVersion: String,
-      url: String,
+      commentUrl: String,
       createdAt: Instant)
 
   object CommentsListPersistence {
@@ -82,15 +84,15 @@ object GithubPostgresRepository {
   def insertDiscussionUpdate(discussionPersistence: DiscussionPersistence): Update0 = {
     import discussionPersistence._
     sql"""
-          INSERT INTO discussion (team_id, team_name, discussion_id, title, author, body, body_version, comments_count, url, comments, created_at, updated_at)
-          VALUES($teamId, $teamName, $discussionId, $title, $author, $body, $bodyVersion, $url, $comments, $createdAt, $updatedAt)
+          INSERT INTO discussion (team_id, team_name, discussion_id, title, author, avatar_url, body, body_version, discussion_url, comments, created_at, updated_at)
+          VALUES($teamId, $teamName, $discussionId, $title, $author, $avatarUrl, $body, $bodyVersion, $discussionUrl, $comments, $createdAt, $updatedAt)
           ON CONFLICT ON CONSTRAINT PK_DISCUSSION DO UPDATE
           SET
               team_name = $teamName,
               title = $title,
               body = $body,
               body_version = $bodyVersion,
-              url = $url,
+              discussion_url = $discussionUrl,
               comments = $comments,
               updated_at = $updatedAt,
               refreshed_at = now()""".update
@@ -98,14 +100,14 @@ object GithubPostgresRepository {
 
   def selectDiscussionQuery(teamId: Long, discussionId: Long): Query0[DiscussionPersistence] =
     sql"""
-          SELECT team_id, team_name, discussion_id, title, author, body, body_version, url, comments, created_at, updated_at
+          SELECT team_id, team_name, discussion_id, title, author, avatar_url, body, body_version, discussion_url, comments, created_at, updated_at
           FROM discussion
           WHERE team_id = $teamId AND discussion_id = $discussionId
       """.query[DiscussionPersistence]
 
   def selectLatestUpdatedAt: Query0[Instant] =
     sql"""
-         SELECT COALESCE(MAX(updated_at), (now() - INTERVAL `10 year`))
+         SELECT COALESCE(MAX(updated_at), (now() - INTERVAL '10 year'))
          FROM discussion
       """.query[Instant]
 }

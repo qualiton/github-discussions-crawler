@@ -22,9 +22,10 @@ package git {
       discussionId: Long,
       title: NonEmptyString,
       author: NonEmptyString,
+      avatarUrl: Url,
       body: NonEmptyString,
       bodyVersion: NonEmptyString,
-      url: Url,
+      discussionUrl: Url,
       comments: List[Comment],
       createdAt: Instant,
       updatedAt: Instant) extends Targetable
@@ -32,9 +33,10 @@ package git {
   final case class Comment(
       commentId: Long,
       author: NonEmptyString,
+      avatarUrl: Url,
       body: NonEmptyString,
       bodyVersion: NonEmptyString,
-      url: Url,
+      commentUrl: Url,
       createdAt: Instant) extends Targetable
 
   final case class ValidationError(message: String, errors: List[Throwable] = List.empty) extends IllegalStateException(message) {

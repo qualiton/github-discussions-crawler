@@ -33,10 +33,10 @@ object DefaultConfigLoader extends ConfigLoader {
           requestTimeout = 5.seconds,
           apiToken = config.Secret(gitApiToken)),
         slackConfig = SlackConfig(
-          baseUrl = "https://hooks.slack.com/services/",
+          baseUri = "https://hooks.slack.com/services/",
           requestTimeout = 5.seconds,
           apiToken = config.Secret(slackToken),
-          enableNotificationPublish = slackDisablePublish.getOrElse(true)),
+          enableNotificationPublish = slackDisablePublish.map(!_).getOrElse(true)),
         databaseConfig =
           DatabaseConfig(
             databaseDriverName = "org.postgresql.Driver",

@@ -1,6 +1,6 @@
 package org.qualiton.crawler.server.main
 
-import cats.effect.{ ConcurrentEffect, ContextShift, ExitCode, Sync }
+import cats.effect.{ ConcurrentEffect, ContextShift, ExitCode, Sync, Timer }
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Stream
@@ -15,7 +15,7 @@ import org.qualiton.crawler.server.config.ServiceConfig
 
 object Server extends LazyLogging {
 
-  def fromConfig[F[_] : ConcurrentEffect : ContextShift](loadConfig: F[ServiceConfig]): Stream[F, ExitCode] = {
+  def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig]): Stream[F, ExitCode] = {
 
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 

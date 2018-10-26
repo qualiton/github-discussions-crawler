@@ -1,5 +1,8 @@
 package org.qualiton.crawler.infrastructure
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
 import scala.concurrent.ExecutionContext
 
 import cats.effect.ConcurrentEffect
@@ -20,10 +23,13 @@ object SlackStream {
       slackClient <- SlackHttp4sClient.stream(slackConfig)
       event <- eventQueue.dequeue
       _ <-
-        if (slackConfig.enableNotificationPublish) {
+        if (slackConfig.enableNotificationPublish && isEventYoungerThanOneDay(event)) {
           Stream.eval(slackClient.sendDiscussionEvent(event))
         } else {
           Stream.empty
         }
     } yield ()
+
+  private def isEventYoungerThanOneDay(event: Event): Boolean =
+    Instant.now().minus(1, ChronoUnit.DAYS) isBefore event.createdAt
 }

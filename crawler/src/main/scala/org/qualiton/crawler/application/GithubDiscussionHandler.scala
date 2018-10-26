@@ -7,17 +7,19 @@ import cats.syntax.traverse._
 import fs2.Stream
 import fs2.concurrent.Queue
 
+import com.typesafe.scalalogging.LazyLogging
 import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.domain.git.{ EventGenerator, GithubClient, GithubRepository }
 
 class GithubDiscussionHandler[F[_] : Effect] private(
     eventQueue: Queue[F, Event],
     githubClient: GithubClient[F],
-    githubRepository: GithubRepository[F]) {
+    githubRepository: GithubRepository[F]) extends LazyLogging {
 
   def synchronizeDiscussions(): Stream[F, Either[Throwable, Unit]] = {
     val program: EitherT[Stream[F, ?], Throwable, Unit] = for {
       lastUpdatedAt <- EitherT.liftF(Stream.eval(githubRepository.findLastUpdatedAt))
+      _ <- EitherT.liftF(Stream.eval(Sync[F].delay(logger.info(s"Synchronizing discussions updated after $lastUpdatedAt"))))
       currentDiscussion <- EitherT(githubClient.getTeamDiscussionsUpdatedAfter(lastUpdatedAt))
       maybePreviousDiscussion <- EitherT(Stream.eval(githubRepository.find(currentDiscussion.teamId, currentDiscussion.discussionId)))
       event <- EitherT.liftF(Stream.eval(EventGenerator.generateEvent(maybePreviousDiscussion, currentDiscussion)))
