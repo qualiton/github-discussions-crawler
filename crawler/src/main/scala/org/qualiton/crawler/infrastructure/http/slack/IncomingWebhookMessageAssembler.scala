@@ -1,9 +1,10 @@
 package org.qualiton.crawler.infrastructure.http.slack
 
 import eu.timepit.refined.auto.autoUnwrap
-import org.qualiton.crawler.domain.core.{Event, NewCommentsDiscoveredEvent, NewDiscussionDiscoveredEvent}
-import org.qualiton.crawler.infrastructure.http.slack.SlackHttp4sClient.{Attachment, Color, Field, IncomingWebhookMessage}
+import org.qualiton.crawler.domain.core.{ Event, NewCommentsDiscoveredEvent, NewDiscussionDiscoveredEvent }
+import org.qualiton.crawler.infrastructure.http.slack.SlackHttp4sClient.{ Attachment, Color, Field, IncomingWebhookMessage }
 
+//TODO remove static
 object IncomingWebhookMessageAssembler {
 
   def fromDomain(event: Event): IncomingWebhookMessage = event match {
@@ -17,8 +18,8 @@ object IncomingWebhookMessageAssembler {
         text = title,
         fields =
           List(Field("Team", teamName, true)) :::
-            (if (totalCommentsCount > 0) List(Field("Comments", totalCommentsCount.toString, true)) else List.empty) :::
-            List(Field("Action needed", addressees.map(_.value).mkString(", "), false)),
+          (if (totalCommentsCount > 0) List(Field("Comments", totalCommentsCount.toString, true)) else List.empty) :::
+          List(Field("Action needed", addressees.map(_.value).mkString(", "), false)),
         ts = createdAt.getEpochSecond)))
 
     case NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, comments) =>
@@ -26,7 +27,7 @@ object IncomingWebhookMessageAssembler {
       IncomingWebhookMessage(List(Attachment(
         color = Color.Good.entryName,
         author_name = comments.map(_.author.value).toList.mkString(", "),
-        title = if (totalCommentsCount == 1) "New comment has been discovered" else s"${comments.size} new comments have been discovered",
+        title = if (totalCommentsCount == 1) "New comment has been discovered" else s"${ comments.size } new comments have been discovered",
         title_link = comments.last.url,
         text = title,
         fields =

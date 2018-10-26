@@ -1,15 +1,16 @@
 package org.qualiton.crawler.server.main
 
-import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, Sync}
+import cats.effect.{ ConcurrentEffect, ContextShift, ExitCode, Sync }
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import com.typesafe.scalalogging.LazyLogging
 import fs2.Stream
 import fs2.concurrent.Queue
+
+import com.typesafe.scalalogging.LazyLogging
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.flyway.FlywayUpdater
-import org.qualiton.crawler.infrastructure.{GithubStream, SlackStream}
+import org.qualiton.crawler.infrastructure.{ GithubStream, SlackStream }
 import org.qualiton.crawler.server.config.ServiceConfig
 
 object Server extends LazyLogging {

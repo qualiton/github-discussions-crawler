@@ -1,10 +1,11 @@
+import sbt.{ Def, _ }
 import sbt.Keys._
-import sbt.{Def, _}
 
 object Dependencies extends AutoPlugin {
 
   private val CatsVersion = "1.4.0"
   private val CatsEffectVersion = "1.0.0"
+  private val CatsMtl = "0.4.0"
   private val CirisVersion = "0.11.0"
   private val DockerTestkitVersion = "0.9.6"
   private val Http4sVersion = "0.19.0"
@@ -15,7 +16,8 @@ object Dependencies extends AutoPlugin {
 
   private val cats = Seq(
     "org.typelevel" %% "cats-core" % CatsVersion,
-    "org.typelevel" %% "cats-effect" % CatsEffectVersion)
+    "org.typelevel" %% "cats-effect" % CatsEffectVersion,
+    "org.typelevel" %% "cats-mtl-core" % CatsMtl)
 
   private val ciris =
     Seq(
@@ -25,7 +27,7 @@ object Dependencies extends AutoPlugin {
       "refined")
       .map(module => "is.cir" %% s"ciris-$module" % CirisVersion) ++ Seq(
       "com.ovoenergy" %% "ciris-aiven-kafka" % "0.3",
-      "com.ovoenergy" %% "ciris-kubernetes" % "0.1" exclude("com.google.guava", "guava"))
+      "com.ovoenergy" %% "ciris-kubernetes" % "0.1" exclude ("com.google.guava", "guava"))
 
   private val google =
     Seq(
@@ -70,7 +72,7 @@ object Dependencies extends AutoPlugin {
       "com.zaxxer" % "HikariCP" % "2.7.8",
       "org.postgresql" % "postgresql" % "42.2.2",
       "org.flywaydb" % "flyway-core" % "5.0.7",
-      "com.google.cloud.sql" % "postgres-socket-factory" % "1.0.5" exclude("com.google.guava", "guava-jdk5"))
+      "com.google.cloud.sql" % "postgres-socket-factory" % "1.0.5" exclude ("com.google.guava", "guava-jdk5"))
 
   private val monocle =
     Seq(
@@ -109,16 +111,17 @@ object Dependencies extends AutoPlugin {
   private val defaultDependencies: Seq[Def.Setting[Seq[ModuleID]]] =
     Seq(
       libraryDependencies ++=
-        ciris ++
-          circe ++
-          monocle ++
-          enumeratum ++
-          database ++
-          doobie ++
-          google ++
-          http4s ++
-          others ++
-          logging)
+      cats ++
+      ciris ++
+      circe ++
+      monocle ++
+      enumeratum ++
+      database ++
+      doobie ++
+      google ++
+      http4s ++
+      others ++
+      logging)
 
   object autoImport {
 

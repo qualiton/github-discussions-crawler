@@ -6,5 +6,5 @@ import fs2.Stream
 
 trait GithubClient[F[_]] {
 
-  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Either[Throwable, TeamDiscussionDetails]]
+  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Either[Throwable, Discussion]]
 }

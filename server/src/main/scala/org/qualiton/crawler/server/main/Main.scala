@@ -1,7 +1,8 @@
 package org.qualiton.crawler.server.main
 
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{ ExitCode, IO, IOApp }
 import cats.implicits.toFunctorOps
+
 import org.qualiton.crawler.server.config.DefaultConfigLoader
 
 object Main extends IOApp {
