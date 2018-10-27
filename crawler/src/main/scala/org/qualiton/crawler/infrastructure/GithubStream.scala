@@ -27,7 +27,7 @@ object GithubStream {
       githubClient <- GithubHttp4sClient.stream(gitConfig)
       repository <- GithubPostgresRepository.stream(dataSource)
       handler <- GithubDiscussionHandler.stream(eventQueue, githubClient, repository)
-      _ <- Stream.awakeEvery[F](30.seconds)
+      _ <- Stream.awakeEvery[F](1.minute)
       result <- handler.synchronizeDiscussions()
     } yield result
 
