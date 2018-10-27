@@ -5,14 +5,18 @@ import java.util.Base64
 
 import scala.concurrent.ExecutionContext
 
+import cats.data.EitherT
 import cats.effect.{ ConcurrentEffect, Effect, Sync }
+import cats.syntax.applicativeError._
 import fs2.Stream
 
+import com.typesafe.scalalogging.LazyLogging
 import eu.timepit.refined.auto.autoUnwrap
 import io.circe.Decoder
 import io.circe.fs2._
 import io.circe.generic.auto._
-import org.http4s.{ AuthScheme, Credentials, Header, Headers, Method, Request, Uri }
+import org.http4s.{ AuthScheme, Credentials, EntityDecoder, Header, Headers, Method, Request, Uri }
+import org.http4s.circe._
 import org.http4s.MediaType.application.json
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -20,9 +24,9 @@ import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.headers.{ Accept, Authorization }
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionCommentResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionResponse, UserTeamResponse }
 
-class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: GitConfig) extends GithubClient[F] with Http4sClientDsl[F] {
+class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: GitConfig) extends GithubClient[F] with Http4sClientDsl[F] with LazyLogging {
 
   import gitConfig._
 
@@ -35,29 +39,44 @@ class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: Gi
       uri = Uri.unsafeFromString(baseUrl).withPath(path).withQueryParam("direction", "asc"),
       headers = Headers(authorization, acceptHeader))
 
-  private def sendReceive[A: Decoder](request: Request[F]): Stream[F, A] = {
-    Stream.eval(Sync[F].point(client))
-      .evalMap(_.expect[String](request))
+  private def sendReceiveStream[A: Decoder](request: Request[F]): EitherT[Stream[F, ?], Throwable, A] = {
+    Stream.eval(client.expect[String](request))
       .through(stringArrayParser)
       .through(decoder[F, A])
+      .attemptT
   }
 
-  private def getUserTeams(): Stream[F, UserTeamResponse] =
-    sendReceive[UserTeamResponse](request("/user/teams", Accept(json)))
+  private def getUserTeams(): EitherT[Stream[F, ?], Throwable, UserTeamResponse] =
+    sendReceiveStream[UserTeamResponse](request("/user/teams", Accept(json)))
 
-  private def getTeamDiscussions(teamId: Long): Stream[F, TeamDiscussionResponse] =
-    sendReceive[TeamDiscussionResponse](request(s"/teams/$teamId/discussions", previewAcceptHeader))
+  private def getTeamDiscussions(teamId: Long): EitherT[Stream[F, ?], Throwable, TeamDiscussionResponse] =
+    sendReceiveStream[TeamDiscussionResponse](request(s"/teams/$teamId/discussions", previewAcceptHeader))
 
-  private def getTeamDiscussionComments(teamId: Long, discussionId: Long): Stream[F, TeamDiscussionCommentResponse] =
-    sendReceive[TeamDiscussionCommentResponse](request(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader))
+  private def getTeamDiscussionComments(teamId: Long, discussionId: Long): EitherT[Stream[F, ?], Throwable, List[TeamDiscussionComment]] = {
+    implicit val teamDiscussionComments: EntityDecoder[F, List[TeamDiscussionComment]] = jsonOf[F, List[TeamDiscussionComment]]
+    EitherT(Stream.eval(client.expect[List[TeamDiscussionComment]](request(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)).attempt))
+  }
 
-  //TODO fix filtering
-  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Either[Throwable, Discussion]] =
-    for {
+  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Either[Throwable, Discussion]] = {
+
+    def filterDiscussions(discussion: Discussion): EitherT[Stream[F, ?], Throwable, Discussion] =
+      if ((discussion.updatedAt :: discussion.comments.map(_.updatedAt)).max.isAfter(instant)) {
+        logger.info(s"New item found in ${ discussion.teamName } -> ${ discussion.title }")
+        EitherT.pure(discussion)
+      } else {
+        EitherT[Stream[F, ?], Throwable, Discussion](Stream.empty.covary)
+      }
+
+    val program: EitherT[Stream[F, ?], Throwable, Discussion] = for {
       team <- getUserTeams()
-      discussion <- getTeamDiscussions(team.id).filter(_.updated_at isAfter instant)
-      comments <- Stream.eval(getTeamDiscussionComments(team.id, discussion.number).compile.toList)
-    } yield DiscussionRestAssembler.toDomain(team, discussion, comments).toEither
+      discussion <- getTeamDiscussions(team.id)
+      comments <- getTeamDiscussionComments(team.id, discussion.number)
+      domainDiscussion <- EitherT(Stream.eval(Sync[F].delay(DiscussionRestAssembler.toDomain(team, discussion, comments).toEither)))
+      filteredDomainDiscussion <- filterDiscussions(domainDiscussion)
+    } yield filteredDomainDiscussion
+
+    program.value
+  }
 }
 
 object GithubHttp4sClient {
@@ -78,13 +97,14 @@ object GithubHttp4sClient {
       created_at: Instant,
       updated_at: Instant)
 
-  final case class TeamDiscussionCommentResponse(
+  final case class TeamDiscussionComment(
       author: Author,
       number: Long,
       body: String,
       body_version: String,
       html_url: String,
-      created_at: Instant)
+      created_at: Instant,
+      updated_at: Instant)
 
   def stream[F[_] : ConcurrentEffect](gitConfig: GitConfig)(implicit ec: ExecutionContext): Stream[F, GithubClient[F]] =
     for {

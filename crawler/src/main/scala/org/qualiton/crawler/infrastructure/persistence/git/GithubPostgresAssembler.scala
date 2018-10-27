@@ -37,7 +37,8 @@ object GithubPostgresAssembler {
         body = c.body,
         bodyVersion = c.bodyVersion,
         commentUrl = c.commentUrl,
-        createdAt = c.createdAt))),
+        createdAt = c.createdAt,
+        updatedAt = c.updatedAt))),
       createdAt = discussion.createdAt,
       updatedAt = discussion.updatedAt)
   }
@@ -74,6 +75,6 @@ object GithubPostgresAssembler {
 
     (authorValidated, avatarUrlValidated, bodyValidated, bodyVersionValidated, commentUrlValidated)
       .mapN((author, avatarUrl, body, bodyVersion, commentUrl) =>
-        Comment(commentId, author, avatarUrl, body, bodyVersion, commentUrl, createdAt))
+        Comment(commentId, author, avatarUrl, body, bodyVersion, commentUrl, createdAt, updatedAt))
   }
 }

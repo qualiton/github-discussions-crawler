@@ -11,8 +11,8 @@ import shapeless.{ Witness => W }
 
 package object core {
 
-  type AddresseeSpec = MatchesRegex[W.`"@[a-z]+"`.T]
-  type Addressee = String Refined AddresseeSpec
+  type TargetedSpec = MatchesRegex[W.`"@[a-z]+|#[a-z_\\\\-]+"`.T]
+  type Targeted = String Refined TargetedSpec
 
   type Url = String Refined RefinedUrl
 }
@@ -30,7 +30,7 @@ package core {
       avatarUrl: Url,
       discussionUrl: Url,
       totalCommentsCount: Int,
-      addressees: Set[Addressee],
+      targeted: Set[Targeted],
       override val createdAt: Instant) extends Event
 
   final case class NewCommentsDiscoveredEvent(
@@ -44,7 +44,7 @@ package core {
       author: NonEmptyString,
       avatarUrl: Url,
       commentUrl: Url,
-      addressees: Set[Addressee],
-      createdAt: Instant)
+      targeted: Set[Targeted],
+      updatedAt: Instant)
 
 }

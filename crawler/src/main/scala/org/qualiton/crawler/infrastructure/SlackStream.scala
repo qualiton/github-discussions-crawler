@@ -17,19 +17,18 @@ object SlackStream {
 
   def apply[F[_] : ConcurrentEffect](
       eventQueue: Queue[F, Event],
-      slackConfig: SlackConfig)
-    (implicit ec: ExecutionContext): Stream[F, Unit] =
+      slackConfig: SlackConfig)(implicit ec: ExecutionContext): Stream[F, Unit] =
     for {
       slackClient <- SlackHttp4sClient.stream(slackConfig)
       event <- eventQueue.dequeue
       _ <-
-        if (slackConfig.enableNotificationPublish && isEventYoungerThanOneDay(event)) {
+        if (slackConfig.enableNotificationPublish && isEventRecent(event)) {
           Stream.eval(slackClient.sendDiscussionEvent(event))
         } else {
           Stream.empty
         }
     } yield ()
 
-  private def isEventYoungerThanOneDay(event: Event): Boolean =
-    Instant.now().minus(1, ChronoUnit.DAYS) isBefore event.createdAt
+  private def isEventRecent(event: Event): Boolean =
+    Instant.now().minus(6, ChronoUnit.HOURS) isBefore event.createdAt
 }

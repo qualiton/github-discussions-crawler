@@ -12,7 +12,7 @@ import eu.timepit.refined.string.{ Url => RefinedUrl }
 import eu.timepit.refined.types.string.NonEmptyString
 import org.qualiton.crawler.domain.core.Url
 import org.qualiton.crawler.domain.git.{ Comment, Discussion, ValidationError }
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionCommentResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionResponse, UserTeamResponse }
 
 //TODO remove static
 object DiscussionRestAssembler {
@@ -20,7 +20,7 @@ object DiscussionRestAssembler {
   def toDomain(
       userTeamResponse: UserTeamResponse,
       teamDiscussionResponse: TeamDiscussionResponse,
-      teamDiscussionCommentResponse: List[TeamDiscussionCommentResponse]): Validated[Throwable, Discussion] = {
+      teamDiscussionCommentResponse: List[TeamDiscussionComment]): Validated[Throwable, Discussion] = {
 
     val teamNameValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](userTeamResponse.name).leftMap(ValidationError(_)).toValidatedNel
     val titleValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](teamDiscussionResponse.title).leftMap(ValidationError(_)).toValidatedNel
@@ -34,13 +34,15 @@ object DiscussionRestAssembler {
 
     val discussionValidated: ValidatedNel[ValidationError, Discussion] =
       (teamNameValidated, titleValidated, authorValidated, avatarUrlValidated, bodyValidated, bodyVersionValidated, discussionUrlValidated, commentsValidated)
-        .mapN((teamName, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments) =>
-          Discussion(userTeamResponse.id, teamName, teamDiscussionResponse.number, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments, teamDiscussionResponse.created_at, teamDiscussionResponse.updated_at))
+        .mapN { (teamName, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments) =>
+          val discussionUpdateAt = (teamDiscussionResponse.updated_at :: comments.map(_.updatedAt)).max
+          Discussion(userTeamResponse.id, teamName, teamDiscussionResponse.number, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments, teamDiscussionResponse.created_at, discussionUpdateAt)
+        }
 
     discussionValidated.leftMap(n => ValidationError("Cannot assemble discussion!", n.toList))
   }
 
-  private def toComment(teamDiscussionCommentResponse: TeamDiscussionCommentResponse): ValidatedNel[ValidationError, Comment] = {
+  private def toComment(teamDiscussionCommentResponse: TeamDiscussionComment): ValidatedNel[ValidationError, Comment] = {
     import teamDiscussionCommentResponse._
 
     val authorValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](author.login).leftMap(ValidationError(_)).toValidatedNel
@@ -51,6 +53,6 @@ object DiscussionRestAssembler {
 
     (authorValidated, avatarUrlValidated, bodyValidated, bodyVersionValidated, commentUrlValidated)
       .mapN((author, avatarUrl, body, bodyVersion, commentUrl) =>
-        Comment(number, author, avatarUrl, body, bodyVersion, commentUrl, created_at))
+        Comment(number, author, avatarUrl, body, bodyVersion, commentUrl, created_at, updated_at))
   }
 }

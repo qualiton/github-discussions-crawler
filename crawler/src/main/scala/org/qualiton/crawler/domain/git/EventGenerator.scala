@@ -20,8 +20,8 @@ object EventGenerator {
           discussionUrl = currentDiscussion.discussionUrl,
           teamName = currentDiscussion.teamName,
           totalCommentsCount = currentDiscussion.comments.size,
-          addressees = currentDiscussion.addressees.map(refineV[AddresseeSpec](_).toOption).flatten,
-          createdAt = currentDiscussion.createdAt)
+          targeted = currentDiscussion.targeted.map(refineV[TargetedSpec](_).toOption).flatten,
+          createdAt = currentDiscussion.updatedAt)
       }
 
       maybePrevious.fold[Option[Event]](generateNewDiscussionDiscoveredEvent(current).some) { previous =>
@@ -33,15 +33,15 @@ object EventGenerator {
               author = c.author,
               avatarUrl = c.avatarUrl,
               commentUrl = c.commentUrl,
-              addressees = c.addressees.map(refineV[AddresseeSpec](_).toOption).flatten,
-              createdAt = c.createdAt))
+              targeted = c.targeted.map(refineV[TargetedSpec](_).toOption).flatten,
+              updatedAt = c.updatedAt))
 
           NewCommentsDiscoveredEvent(
             teamName = teamName,
             title = title,
             totalCommentsCount = comments.size,
             newComments = NonEmptyList(newCurrentComments.head, newCurrentComments.tail),
-            createdAt = newCurrentComments.map(_.createdAt).max).some
+            createdAt = newCurrentComments.map(_.updatedAt).max).some
 
         } else {
           none[Event]

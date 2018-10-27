@@ -74,7 +74,8 @@ object GithubPostgresRepository {
       body: String,
       bodyVersion: String,
       commentUrl: String,
-      createdAt: Instant)
+      createdAt: Instant,
+      updatedAt: Instant)
 
   object CommentsListPersistence {
 
