@@ -24,7 +24,7 @@ import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.headers.{ Accept, Authorization }
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: GitConfig) extends GithubClient[F] with Http4sClientDsl[F] with LazyLogging {
 
@@ -52,12 +52,12 @@ class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: Gi
   private def getTeamDiscussions(teamId: Long): EitherT[Stream[F, ?], Throwable, TeamDiscussionResponse] =
     sendReceiveStream[TeamDiscussionResponse](request(s"/teams/$teamId/discussions", previewAcceptHeader))
 
-  private def getTeamDiscussionComments(teamId: Long, discussionId: Long): EitherT[Stream[F, ?], Throwable, List[TeamDiscussionComment]] = {
-    implicit val teamDiscussionComments: EntityDecoder[F, List[TeamDiscussionComment]] = jsonOf[F, List[TeamDiscussionComment]]
-    EitherT(Stream.eval(client.expect[List[TeamDiscussionComment]](request(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)).attempt))
+  private def getTeamDiscussionComments(teamId: Long, discussionId: Long): EitherT[Stream[F, ?], Throwable, TeamDiscussionCommentsResponse] = {
+    implicit val teamDiscussionComments: EntityDecoder[F, TeamDiscussionCommentsResponse] = jsonOf[F, TeamDiscussionCommentsResponse]
+    EitherT(Stream.eval(client.expect[TeamDiscussionCommentsResponse](request(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)).attempt))
   }
 
-  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Either[Throwable, Discussion]] = {
+  def getTeamDiscussionsUpdatedAfter(instant: Instant): EitherT[Stream[F, ?], Throwable, Discussion] = {
 
     def filterDiscussions(discussion: Discussion): EitherT[Stream[F, ?], Throwable, Discussion] =
       if ((discussion.updatedAt :: discussion.comments.map(_.updatedAt)).max.isAfter(instant)) {
@@ -67,15 +67,13 @@ class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: Gi
         EitherT[Stream[F, ?], Throwable, Discussion](Stream.empty.covary)
       }
 
-    val program: EitherT[Stream[F, ?], Throwable, Discussion] = for {
+    for {
       team <- getUserTeams()
       discussion <- getTeamDiscussions(team.id)
       comments <- getTeamDiscussionComments(team.id, discussion.number)
       domainDiscussion <- EitherT(Stream.eval(Sync[F].delay(DiscussionRestAssembler.toDomain(team, discussion, comments).toEither)))
       filteredDomainDiscussion <- filterDiscussions(domainDiscussion)
     } yield filteredDomainDiscussion
-
-    program.value
   }
 }
 
@@ -96,6 +94,8 @@ object GithubHttp4sClient {
       html_url: String,
       created_at: Instant,
       updated_at: Instant)
+
+  type TeamDiscussionCommentsResponse = List[TeamDiscussionComment]
 
   final case class TeamDiscussionComment(
       author: Author,

@@ -12,7 +12,7 @@ import eu.timepit.refined.string.{ Url => RefinedUrl }
 import eu.timepit.refined.types.string.NonEmptyString
 import org.qualiton.crawler.domain.core.Url
 import org.qualiton.crawler.domain.git.{ Comment, Discussion, ValidationError }
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 //TODO remove static
 object DiscussionRestAssembler {
@@ -20,7 +20,7 @@ object DiscussionRestAssembler {
   def toDomain(
       userTeamResponse: UserTeamResponse,
       teamDiscussionResponse: TeamDiscussionResponse,
-      teamDiscussionCommentResponse: List[TeamDiscussionComment]): Validated[Throwable, Discussion] = {
+      teamDiscussionCommentsResponse: TeamDiscussionCommentsResponse): Validated[Throwable, Discussion] = {
 
     val teamNameValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](userTeamResponse.name).leftMap(ValidationError(_)).toValidatedNel
     val titleValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](teamDiscussionResponse.title).leftMap(ValidationError(_)).toValidatedNel
@@ -30,7 +30,7 @@ object DiscussionRestAssembler {
     val bodyVersionValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](teamDiscussionResponse.body_version).leftMap(ValidationError(_)).toValidatedNel
     val discussionUrlValidated: ValidatedNel[ValidationError, Url] = refineV[RefinedUrl](teamDiscussionResponse.html_url).leftMap(ValidationError(_)).toValidatedNel
 
-    val commentsValidated: ValidatedNel[ValidationError, List[Comment]] = teamDiscussionCommentResponse.traverse(toComment)
+    val commentsValidated: ValidatedNel[ValidationError, List[Comment]] = teamDiscussionCommentsResponse.traverse(toComment)
 
     val discussionValidated: ValidatedNel[ValidationError, Discussion] =
       (teamNameValidated, titleValidated, authorValidated, avatarUrlValidated, bodyValidated, bodyVersionValidated, discussionUrlValidated, commentsValidated)
