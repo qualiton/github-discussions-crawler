@@ -19,6 +19,7 @@ workflows:
   fake-jobs:
     jobs:
     - echo:
-        branches:
-          ignore:
-          - gh-pages
+        filters:
+          branches:
+            ignore:
+            - gh-pages
