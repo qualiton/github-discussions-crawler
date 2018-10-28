@@ -22,7 +22,6 @@ version: 2.1
     root: ~/
     paths:
     - project/*
-    - chart/*
 
 .cache_key: &cache_key
               v1-repo-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-{{ .Branch }}-{{ checksum "project/Dependencies.scala"}}
@@ -37,7 +36,7 @@ version: 2.1
   run:
     name: Setup git
     command: |
-      sh ~/scripts/init_github.sh
+      sh .circleci/scripts/init_github.sh
 
 jobs:
   compile:
