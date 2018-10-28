@@ -1,0 +1,24 @@
+version: 2.1
+
+.default_image: &default_image
+  docker:
+  - image: circleci/openjdk:8-jdk
+  working_directory: ~/project
+
+jobs:
+  echo:
+    <<: *default_image
+    steps:
+    - run:
+        name: Fake job
+        command: |
+          echo "Fake job"
+
+workflows:
+  version: 2
+  fake-jobs:
+    jobs:
+    - echo:
+        branches:
+          ignore:
+          - gh-pages
