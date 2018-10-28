@@ -25,9 +25,7 @@ object Dependencies extends AutoPlugin {
       "enumeratum",
       "generic",
       "refined")
-      .map(module => "is.cir" %% s"ciris-$module" % CirisVersion) ++ Seq(
-      "com.ovoenergy" %% "ciris-aiven-kafka" % "0.3",
-      "com.ovoenergy" %% "ciris-kubernetes" % "0.1" exclude ("com.google.guava", "guava"))
+      .map(module => "is.cir" %% s"ciris-$module" % CirisVersion)
 
   private val google =
     Seq(
@@ -57,8 +55,7 @@ object Dependencies extends AutoPlugin {
     Seq(
       "org.slf4j" % "jul-to-slf4j" % "1.7.25",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
-      "de.siegmar" % "logback-gelf" % "1.1.0")
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2")
 
   private val doobie =
     Seq(
@@ -91,7 +88,6 @@ object Dependencies extends AutoPlugin {
     Seq(
       "eu.timepit" %% "refined" % RefinedVersion,
       "eu.timepit" %% "refined-cats" % RefinedVersion,
-      "io.scalaland" %% "chimney" % "0.2.1",
       "org.scalactic" %% "scalactic" % "3.0.5")
 
   private val test =
@@ -129,7 +125,6 @@ object Dependencies extends AutoPlugin {
       def withDependencies: Project =
         project
           .settings(defaultDependencies)
-          .settings(Resolvers.default)
           .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"))
     }
 

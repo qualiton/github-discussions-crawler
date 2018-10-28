@@ -1,6 +1,6 @@
 version: 2.1
 
-.service_name: &service_name gd_crawler
+.service_name: &service_name git-discussions-crawler
 
 .default_image: &default_image
   docker:
@@ -9,7 +9,7 @@ version: 2.1
 
 .defaults: &defaults
   environment:
-    MAINTAINER: "krisztian.lachata@gmail.com"
+    MAINTAINER: "info@qualiton.org"
     SERVICE_NAME: *service_name
 
 .attach_workspace: &attach_workspace
@@ -88,7 +88,15 @@ jobs:
     - run:
         name: Sbt release
         command: |
-          echo "Sbt Release"
+          sbt "release with-defaults"
+    - run:
+        name: Docker Login
+        command: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - run:
+        name: Push container to registry
+        command: |
+          docker push "$DOCKER_USERNAME/$SERVICE_NAME"
 
   release_chart:
     <<: *default_image

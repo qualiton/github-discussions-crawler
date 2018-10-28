@@ -14,18 +14,10 @@ object Docker extends AutoPlugin {
       javaOptions in Universal ++= Seq(
         "-J-XX:+UnlockExperimentalVMOptions",
         "-J-XX:+UseCGroupMemoryLimitForHeap",
-        "-J-XX:MaxRAMFraction=2",
-        "-J-XX:+PrintFlagsFinal",
-        "-J-XX:+PrintGCDateStamps",
-        "-J-XX:+PrintGCDetails",
-        "-J-XX:+UseGCLogFileRotation",
-        "-J-XX:NumberOfGCLogFiles=3",
-        "-J-XX:GCLogFileSize=2M",
-        "-J-XX:+HeapDumpOnOutOfMemoryError",
-        "-Xloggc:/tmp/gc.log"),
+        "-J-XX:MaxRAMFraction=2"),
       aggregate in TypesafeDocker := false,
       mainClass in Compile := Some("org.qualiton.crawler.main.Main"),
-      dockerBaseImage := "frolvlad/alpine-oraclejdk8:latest", // use alpine based image with glibc for sigar
+      dockerBaseImage := "openjdk:8-jdk-alpine",
       dockerUpdateLatest := true,
       dockerBuildOptions := "--rm=false" +: dockerBuildOptions.value.tail,
       packageName in TypesafeDocker := moduleName.value,
@@ -34,8 +26,8 @@ object Docker extends AutoPlugin {
       maintainer in TypesafeDocker := "info@qualiton.org",
       dockerAlias := {
         DockerAlias(
-          registryHost = sys.env.get("GCR_PREFIX") orElse Some("eu.gcr.io"),
-          username = sys.env.get("NONPROD_PROJECT_ID") orElse Some("qualiton-nonprod"),
+          registryHost = sys.env.get("REGISTRY_HOST") orElse Some("lachatak"),
+          username = None,
           name = sys.env.getOrElse("CONTAINER_NAME", moduleName.value),
           tag = Some(version.value)
         )
