@@ -125,8 +125,6 @@ jobs:
           pwd
           git clean -f -d
           pwd
-          git branch --track gh-pages origin/gh-pages
-          pwd
           mv /tmp/$SERVICE_NAME-*.tgz .
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
           VERSION=`echo "github-discussions-crawler-0.0.1-SNAPSHOT.tgz" | awk -F"github-discussions-crawler-" '{print $2}' | awk -F".tgz" '{print $1}'`
