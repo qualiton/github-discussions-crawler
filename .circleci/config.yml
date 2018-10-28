@@ -104,6 +104,7 @@ jobs:
         name: Push container to registry
         command: |
           docker push "$DOCKER_USERNAME/$SERVICE_NAME"
+    - *persist_to_workspace
 
   release_chart:
     <<: *default_image
@@ -120,11 +121,13 @@ jobs:
           mv $SERVICE_NAME-*.tgz /tmp
           git checkout .
           git checkout gh-pages
+          git clean -f -d
           git branch --track gh-pages origin/gh-pages
           mv /tmp/$SERVICE_NAME-*.tgz .
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
-          git commit -a -m "change index"
-          git push origin
+          VERSION=`echo "github-discussions-crawler-0.0.1-SNAPSHOT.tgz" | awk -F"github-discussions-crawler-" '{print $2}' | awk -F".tgz" '{print $1}'`
+          git commit -a -m "change index for $VERSION"
+          git push origin gh-pages
 
 workflows:
   version: 2
