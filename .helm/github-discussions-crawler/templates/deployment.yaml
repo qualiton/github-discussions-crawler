@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    tier: backend
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}
+        tier: backend
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+    spec:
+      volumes:
+      - name: gcp
+        secret:
+          secretName: google-application-credentials
+          items:
+          - key: credentials.json
+            path: credentials.json
+      serviceAccountName: {{ template "fullname" . }}-account
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.dockerhub.username }}/{{ .Values.service.name }}:{{ .Chart.Version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: gcp
+          mountPath: "/etc/gcp"
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/gcp/credentials.json"
+        - name: HTTP_PORT
+          value: "{{ .Values.service.httpPort }}"
+        ports:
+        - containerPort: {{ .Values.service.httpPort }}
+        livenessProbe:
+          initialDelaySeconds: 30
+          httpGet:
+            path: {{ .Values.service.probe.livenessPath }}
+            port: {{ .Values.service.httpPort }}
+        resources:
+  {{ toYaml .Values.resources | indent 14 }}

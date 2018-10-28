@@ -1,0 +1,23 @@
+serviceName: &serviceName github-discussions-crawler
+namespace: *serviceName
+replicaCount: 1
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailable: 0
+image:
+  tag: latest
+  pullPolicy: Always
+service:
+  name: *serviceName
+  httpPort: 9000
+  probe:
+    livenessPath: /internal/status
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "250m"
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
+dockerhub:
+  username: lachatak

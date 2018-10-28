@@ -5,3 +5,4 @@ project/project
 .helm/environments/nonprod_app_secrets.yaml
 .helm/environments/prod_app_secrets.yaml
 server/native
+*.tgz
