@@ -1,14 +1,13 @@
 package org.qualiton.crawler.common.datasource
 
-import scala.concurrent.ExecutionContext
-
-import cats.effect.{ ContextShift, Effect, Sync }
-
-import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
+import cats.effect.{ContextShift, Effect, Sync}
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import doobie.hikari.HikariTransactor
 import eu.timepit.refined.auto.autoUnwrap
 import org.qualiton.crawler.common.config.DatabaseConfig
 import org.qualiton.crawler.common.util.Closeable
+
+import scala.concurrent.ExecutionContext
 
 object DataSource {
   def apply[F[_] : Effect : ContextShift](
@@ -29,7 +28,7 @@ final class DataSource[F[_] : Effect : ContextShift] private(
   lazy val hikariDataSource: HikariDataSource = {
     val hikariConfig = new HikariConfig()
     hikariConfig.setDriverClassName(databaseDriverName)
-    hikariConfig.setJdbcUrl(connectionString)
+    hikariConfig.setJdbcUrl(jdbcUrl)
     hikariConfig.setUsername(username)
     hikariConfig.setPassword(password.value)
     hikariConfig.setMaximumPoolSize(maximumPoolSize)

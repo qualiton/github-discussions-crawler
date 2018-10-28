@@ -37,10 +37,7 @@ version: 2.1
   run:
     name: Setup git
     command: |
-      mkdir -p ~/.ssh
-      sudo ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts && \
-      git config --global user.name "lachatak" && \
-      git config --global user.email "krisztian.lachata@gmail.com"
+      sh ~/scripts/init_github.sh
 
 jobs:
   compile:
@@ -119,16 +116,21 @@ jobs:
     - *restore_cache
     - *setup_git
     - run:
-        name: Release chart
+        name: Init helm
         command: |
           curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash -s -- -v $HELM_VERSION
           helm init --client-only
-          cd .helm
+    - run:
+        name: Package chart
+        command: |
+          cd ~/project/.helm
           helm package $SERVICE_NAME
           mv $SERVICE_NAME-*.tgz /tmp
-          git checkout .
+    - run:
+        name: Release chart
+        command: |
+          cd ~/project/
           git checkout gh-pages
-          cd ..
           git clean -f -d
           mv /tmp/$SERVICE_NAME-*.tgz .
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
