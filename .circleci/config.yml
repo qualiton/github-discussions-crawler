@@ -124,6 +124,7 @@ jobs:
         command: |
           cd ~/project/.helm
           helm package $SERVICE_NAME
+          rm /tmp/$SERVICE_NAME-*.tgz
           mv $SERVICE_NAME-*.tgz /tmp
     - run:
         name: Release chart
