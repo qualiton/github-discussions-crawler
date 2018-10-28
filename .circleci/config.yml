@@ -4,7 +4,7 @@ version: 2.1
 
 .default_image: &default_image
   docker:
-  - image: circleci/openjdk:8-jdk-browsers
+  - image: circleci/openjdk:8-jdk
   working_directory: ~/project
 
 .defaults: &defaults
