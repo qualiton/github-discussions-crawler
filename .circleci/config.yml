@@ -134,7 +134,7 @@ jobs:
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
           VERSION=`ls $SERVICE_NAME-*.tgz | awk -F"$SERVICE_NAME-" '{print $2}' | awk -F".tgz" '{print $1}'`
           git add .
-          git commit -a -m "change index for $VERSION"
+          git commit -a -m "add version $VERSION"
           git push origin gh-pages
 
 workflows:
@@ -142,23 +142,23 @@ workflows:
   build-and-deploy:
     jobs:
     - compile
-    #    - test:
-    #        requires:
-    #        - compile
-    #    - ittest:
-    #        requires:
-    #        - compile
-    #    - e2etest:
-    #        requires:
-    #        - compile
-    #    - build:
-    #        filters:
-    #          branches:
-    #            only: master
-    #        requires:
-    #        - test
-    #        - ittest
-    #        - e2etest
-    - release_chart:
+    - test:
         requires:
         - compile
+    - ittest:
+        requires:
+        - compile
+    - e2etest:
+        requires:
+        - compile
+    - build:
+        filters:
+          branches:
+            only: master
+        requires:
+        - test
+        - ittest
+        - e2etest
+    - release_chart:
+        requires:
+        - build
