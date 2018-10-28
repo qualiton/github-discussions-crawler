@@ -121,6 +121,7 @@ jobs:
           mv $SERVICE_NAME-*.tgz /tmp
           git checkout .
           git checkout gh-pages
+          cd ..
           pwd
           git clean -f -d
           pwd
