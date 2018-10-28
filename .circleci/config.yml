@@ -114,6 +114,7 @@ jobs:
     <<: *defaults
     steps:
     - *attach_workspace
+    - *restore_cache
     - *setup_git
     - run:
         name: Release chart
