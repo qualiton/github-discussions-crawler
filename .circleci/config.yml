@@ -1,6 +1,6 @@
 version: 2.1
 
-.service_name: &service_name git-discussions-crawler
+.service_name: &service_name github-discussions-crawler
 
 .default_image: &default_image
   docker:
