@@ -1,0 +1,127 @@
+version: 2.1
+
+.service_name: &service_name gd_crawler
+
+.default_image: &default_image
+  docker:
+  - image: circleci/openjdk:8-jdk-browsers
+  working_directory: ~/project
+
+.defaults: &defaults
+  environment:
+    MAINTAINER: "krisztian.lachata@gmail.com"
+    SERVICE_NAME: *service_name
+
+.attach_workspace: &attach_workspace
+  attach_workspace:
+    at: ~/
+
+.persist_to_workspace: &persist_to_workspace
+  persist_to_workspace:
+    root: ~/
+    paths:
+    - project/*
+
+.cache_key: &cache_key
+              v1-repo-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-{{ .Branch }}-{{ checksum "project/Dependencies.scala"}}
+
+.restore_cache: &restore_cache
+  restore_cache:
+    name: Restoring project cache
+    keys:
+    - *cache_key
+
+jobs:
+  compile:
+    <<: *default_image
+    steps:
+    - checkout
+    - *restore_cache
+    - run:
+        name: Compile project
+        command: sbt ";clean ;compile ;test:compile ;it:compile ;e2e:compile"
+    - save_cache:
+        name: Saving project cache
+        key: *cache_key
+        paths:
+        - ~/.m2
+        - ~/.ivy2
+        - ~/.sbt
+        - target/resolution-cache
+        - project/target/resolution-cache
+    - *persist_to_workspace
+
+  test:
+    <<: *default_image
+    steps:
+    - *attach_workspace
+    - *restore_cache
+    - run:
+        name: Run tests
+        command: sbt test
+
+  ittest:
+    <<: *default_image
+    steps:
+    - *attach_workspace
+    - *restore_cache
+    - run:
+        name: Run integration tests
+        command: sbt it:test
+
+  e2etest:
+    <<: *default_image
+    steps:
+    - *attach_workspace
+    - *restore_cache
+    - run:
+        name: Run e2e tests
+        command: sbt e2e:test
+
+  build:
+    <<: *default_image
+    <<: *defaults
+    steps:
+    - *attach_workspace
+    - *restore_cache
+    - setup_remote_docker
+    - run:
+        name: Sbt release
+        command: |
+          echo "Sbt Release"
+
+  release_chart:
+    <<: *default_image
+    <<: *defaults
+    steps:
+    - *attach_workspace
+    - run:
+        name: Release chart
+        command: |
+          echo "Release chart"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+    - compile
+    - test:
+        requires:
+        - compile
+    - ittest:
+        requires:
+        - compile
+    - e2etest:
+        requires:
+        - compile
+    - build:
+        filters:
+          branches:
+            only: master
+        requires:
+        - test
+        - ittest
+        - e2etest
+    - release_chart:
+        requires:
+        - build
