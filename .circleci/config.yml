@@ -115,8 +115,6 @@ jobs:
         command: |
           curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash -s -- -v $HELM_VERSION
           helm init --client-only
-          pwd
-          ls -la
           cd .helm
           helm package $SERVICE_NAME
           mv $SERVICE_NAME-*.tgz /tmp
@@ -132,7 +130,7 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
-    #    - compile
+    - compile
     #    - test:
     #        requires:
     #        - compile
@@ -150,7 +148,6 @@ workflows:
     #        - test
     #        - ittest
     #        - e2etest
-    - release_chart
-#    - release_chart:
-#        requires:
-#        - build
+    - release_chart:
+        requires:
+        - compile
