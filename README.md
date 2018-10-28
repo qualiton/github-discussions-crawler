@@ -1,1 +1,1 @@
-# Git Discussions crawler and Slack publisher [![CircleCI](https://circleci.com/gh/qualiton/github_discussions_crawler/tree/master.svg?style=svg)](https://circleci.com/gh/qualiton/github_discussions_crawler/tree/master)
+# Git Discussions crawler and Slack publisher [![CircleCI](https://circleci.com/gh/qualiton/github_discussions_crawler/tree/master.svg?style=shield)](https://circleci.com/gh/qualiton/github_discussions_crawler/tree/master)
