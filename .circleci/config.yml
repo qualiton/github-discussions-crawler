@@ -132,7 +132,7 @@ jobs:
           git clean -f -d
           mv /tmp/$SERVICE_NAME-*.tgz .
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
-          VERSION=`echo "ls $SERVICE_NAME-*.tgz | awk -F"$SERVICE_NAME-" '{print $2}' | awk -F".tgz" '{print $1}'`
+          VERSION=`echo "ls $SERVICE_NAME-*.tgz" | awk -F"$SERVICE_NAME-" '{print $2}' | awk -F".tgz" '{print $1}'`
           git commit -a -m "change index for $VERSION"
           git push origin gh-pages
 
