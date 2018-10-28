@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Publishing Git Discussions Crawler
+name: github_discussions_crawler
+version: 0.0.1-SNAPSHOT
