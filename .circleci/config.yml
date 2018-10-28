@@ -32,6 +32,14 @@ version: 2.1
     keys:
     - *cache_key
 
+.setup_git: &setup_git
+  run:
+    name: Setup git
+    command: |
+      sudo ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts && \
+      git config --global user.name "lachatak" && \
+      git config --global user.email "krisztian.lachata@gmail.com"
+
 jobs:
   compile:
     <<: *default_image
@@ -86,12 +94,7 @@ jobs:
     - *attach_workspace
     - *restore_cache
     - setup_remote_docker
-    - run:
-        name: Setup git
-        command: |
-          sudo ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts && \
-          git config --global user.name "lachatak" && \
-          git config --global user.email "krisztian.lachata@gmail.com"
+    - *setup_git
     - run:
         name: Sbt release
         command: |
@@ -111,6 +114,7 @@ jobs:
     <<: *defaults
     steps:
     - *attach_workspace
+    - *setup_git
     - run:
         name: Release chart
         command: |
@@ -122,9 +126,7 @@ jobs:
           git checkout .
           git checkout gh-pages
           cd ..
-          pwd
           git clean -f -d
-          pwd
           mv /tmp/$SERVICE_NAME-*.tgz .
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
           VERSION=`echo "github-discussions-crawler-0.0.1-SNAPSHOT.tgz" | awk -F"github-discussions-crawler-" '{print $2}' | awk -F".tgz" '{print $1}'`
