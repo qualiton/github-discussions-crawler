@@ -2,11 +2,11 @@ apiVersion: v1
 entries:
   github-discussions-crawler:
   - apiVersion: v1
-    created: 2018-10-28T17:40:36.146925385Z
+    created: 2018-10-28T17:47:49.415424023Z
     description: Publishing Github Discussions Crawler
-    digest: 061f5be3cfb8c8d8a9ff91a35078975b36f17ceecb21be1966286b8bb3156262
+    digest: 32f6e90ccab5078393ef4208034bb3e73ab26c0f4cf4c266b5cb62d2cc923689
     name: github-discussions-crawler
     urls:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.1-SNAPSHOT.tgz
     version: 0.0.1-SNAPSHOT
-generated: 2018-10-28T17:40:36.146610452Z
+generated: 2018-10-28T17:47:49.41504699Z
