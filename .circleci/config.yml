@@ -22,6 +22,7 @@ version: 2.1
     root: ~/
     paths:
     - project/*
+    - chart/*
 
 .cache_key: &cache_key
               v1-repo-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-{{ .Branch }}-{{ checksum "project/Dependencies.scala"}}
@@ -131,7 +132,7 @@ jobs:
           git clean -f -d
           mv /tmp/$SERVICE_NAME-*.tgz .
           helm repo index . --url https://qualiton.github.io/github-discussions-crawler/
-          VERSION=`echo "github-discussions-crawler-0.0.1-SNAPSHOT.tgz" | awk -F"github-discussions-crawler-" '{print $2}' | awk -F".tgz" '{print $1}'`
+          VERSION=`echo "ls $SERVICE_NAME-*.tgz | awk -F"$SERVICE_NAME-" '{print $2}' | awk -F".tgz" '{print $1}'`
           git commit -a -m "change index for $VERSION"
           git push origin gh-pages
 
