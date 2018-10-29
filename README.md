@@ -10,7 +10,7 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 - New discussion has been discovered
 
-<a href="url"><img src="docs/new_discussion.png" aligh="left" width="500" ></a>
+<a href="url"><img src="docs/new_discussion.png" aligh="left" width="450" ></a>
 
 - New comment has been discovered
 
