@@ -4,7 +4,15 @@ Using [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-te
 
 [Slack](https://slack.com/) is the best team collaboration tool out in the market. It excels with huge number of integration capabilities.
 
-Github Discussions Crawler merries both of the worlds by publishing discussion events to a slack channel. It uses [Github API V3](https://developer.github.com/v3/) and [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks) to the integration.
+Github Discussions Crawler marries both of the worlds by publishing discussion events to a slack channel. It uses [Github API V3](https://developer.github.com/v3/) and [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks) to the integration.
+
+# Supported events
+
+- New Discussion was discovered
+![Alt text](docs/new_discussion.png?raw=true "New Discussion")
+
+- New Comment was discovered
+![Alt text](docs/new_comment.png?raw=true "New Comment")
 
 # Prerequisites
 
@@ -12,7 +20,7 @@ Github Discussions Crawler merries both of the worlds by publishing discussion e
 - Kubernetes namespace to install the chart
 - Postgres SQL database to store Github discussion details
 - [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission
-- Slack Incoming Webhooks configured for your prefered slack channel.
+- Slack Incoming Webhooks configured for your preferred slack channel.
 
 # Installing the Chart
 
