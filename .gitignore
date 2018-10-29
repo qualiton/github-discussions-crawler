@@ -2,6 +2,5 @@
 target/
 project/project
 !/.idea/codeStyles/
-.helm/values.yaml
 server/native
 *.tgz
