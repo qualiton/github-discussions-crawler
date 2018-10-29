@@ -1,4 +1,4 @@
-package org.qualiton.crawler.infrastructure.http.git
+package org.qualiton.crawler.infrastructure.rest.git
 
 import cats.data.{ Validated, ValidatedNel }
 import cats.instances.list._
@@ -13,7 +13,7 @@ import eu.timepit.refined.types.string.NonEmptyString
 
 import org.qualiton.crawler.domain.core.Url
 import org.qualiton.crawler.domain.git.{ Comment, Discussion, ValidationError }
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 //TODO remove static
 object DiscussionRestAssembler {

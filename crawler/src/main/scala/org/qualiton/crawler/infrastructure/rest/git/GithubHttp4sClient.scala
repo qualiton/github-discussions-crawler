@@ -1,4 +1,4 @@
-package org.qualiton.crawler.infrastructure.http.git
+package org.qualiton.crawler.infrastructure.rest.git
 
 import java.time.Instant
 import java.util.Base64
@@ -25,7 +25,7 @@ import org.http4s.headers.{ Accept, Authorization }
 
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 class GithubHttp4sClient[F[_] : Effect] private(client: Client[F], gitConfig: GitConfig) extends GithubClient[F] with Http4sClientDsl[F] with LazyLogging {
 

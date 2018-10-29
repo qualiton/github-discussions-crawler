@@ -27,17 +27,19 @@ object DefaultConfigLoader extends ConfigLoader {
 
     loadConfig(
       env[NonEmptyString]("GITHUB_API_TOKEN"),
+      env[Option[FiniteDuration]]("GITHUB_REFRESH_INTERVAL"),
       env[NonEmptyString]("SLACK_API_TOKEN"),
       env[Option[Boolean]]("SLACK_DISABLE_PUBLISH"),
       env[String Refined Url]("DATABASE_JDBC_URL"),
       env[NonEmptyString]("DATABASE_USERNAME"),
       env[NonEmptyString]("DATABASE_PASSWORD")
-    ) { (githubApiToken, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword) =>
+    ) { (githubApiToken, githubRefreshInterval, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword) =>
       ServiceConfig(
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
           requestTimeout = 5.seconds,
-          apiToken = config.Secret(githubApiToken)),
+          apiToken = config.Secret(githubApiToken),
+          refreshInterval = githubRefreshInterval.getOrElse(1.minute)),
         slackConfig = SlackConfig(
           baseUri = "https://hooks.slack.com/services/",
           requestTimeout = 5.seconds,

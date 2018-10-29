@@ -1,7 +1,6 @@
 package org.qualiton.crawler.infrastructure
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
 
 import cats.effect.{ ConcurrentEffect, ContextShift, Timer }
 import fs2.Stream
@@ -11,8 +10,8 @@ import org.qualiton.crawler.application.GithubDiscussionHandler
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.core.Event
-import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sClient
 
 object GithubStream {
 
@@ -27,7 +26,7 @@ object GithubStream {
       githubClient <- GithubHttp4sClient.stream(gitConfig)
       repository <- GithubPostgresRepository.stream(dataSource)
       handler <- GithubDiscussionHandler.stream(eventQueue, githubClient, repository)
-      _ <- Stream.awakeEvery[F](1.minute)
+      _ <- Stream.awakeEvery[F](gitConfig.refreshInterval)
       result <- handler.synchronizeDiscussions()
     } yield result
 

@@ -6,7 +6,7 @@ Using [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-te
 
 Github Discussions Crawler marries both of the worlds by publishing discussion events to a slack channel. It uses [Github API V3](https://developer.github.com/v3/) and [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks) for the integration.
 
-# Supported events
+## Supported events
 
 - New discussion has been discovered
 
@@ -14,25 +14,19 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 - New comment has been discovered
 
-<a href="url"><img src="docs/new_comment.png" aligh="left" width="500" ></a>
+<a href="url"><img src="docs/new_comments.png" aligh="left" width="500" ></a>
 
 Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z]+` or `#[a-z_\\-]+`
 
-## Future improvements
-
-- Send personalised slack message to individuals and/or teams
-- Integrate with [Github Reactions Api](https://developer.github.com/v3/reactions/)
-- Add more event types like `Discussion has been closed`, `Comment body has changed`
-
-# Prerequisites
+## Prerequisites
 
 - Kubernetes cluster on Google Container Engine (GKE)
 - Kubernetes namespace to install the chart
 - Postgres SQL database to store Github discussion details
-- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission
+- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from.
 - Slack Incoming Webhooks configured for your preferred slack channel.
 
-# Installing the Chart
+## Installing the Chart
 
 The chart itself is stored in this github repository in the `gh-pages` branch.
 To be able to use it with `helm` you have to add this chart repository to `helm` repository list.
@@ -40,6 +34,7 @@ To be able to use it with `helm` you have to add this chart repository to `helm`
 ```bash
 helm repo add qualiton https://qualiton.github.io/github-discussions-crawler/
 ```
+> **Tip**: verify if helm sees the added chart repository `helm search github-discussions-crawler`
 
 Install from remote URL with the release name `github-discussions-crawler` into namespace `github-discussions-crawler`:
 
@@ -62,6 +57,32 @@ database:
   password: PASSWORD
 ```
 
-# Running with GCP SQL
+Alternatively specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
+
+## Uninstalling the Chart
+
+To uninstall/delete the `github-discussions-crawler` deployment:
+
+```bash
+helm delete github-discussions-crawler
+```
+
+The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+## Running with GCP SQL
 
 To be able to run with GCP SQL you have to install [gcloud-sqlproxy](https://github.com/helm/charts/tree/master/stable/gcloud-sqlproxy) and configure the Crawler database settings to point to the gcloud-sqlproxy.
+
+## Future improvements
+
+- Send personalised slack message to individuals and/or teams
+- Integrate with [Github Reactions Api](https://developer.github.com/v3/reactions/)
+- Add more event types like `Discussion has been closed`, `Comment body has changed`
+
+## Documentation
+
+- [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-team-discussions/)
+- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+- [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks)
+- [Cloud SQL Proxy for Postgres](https://cloud.google.com/sql/docs/postgres/sql-proxy)
+
