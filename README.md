@@ -16,6 +16,14 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 <a href="url"><img src="docs/new_comment.png" aligh="left" width="500" ></a>
 
+Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z]+` or `#[a-z_\\-]+`
+
+## Future improvements
+
+- Send personalised slack message to individuals and/or teams
+- Integrate with [Github Reactions Api](https://developer.github.com/v3/reactions/)
+- Add more event types like `Discussion has been closed`, `Comment body has changed`
+
 # Prerequisites
 
 - Kubernetes cluster on Google Container Engine (GKE)
