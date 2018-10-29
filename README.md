@@ -4,15 +4,15 @@ Using [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-te
 
 [Slack](https://slack.com/) is the best team collaboration tool out in the market. It excels with huge number of integration capabilities.
 
-Github Discussions Crawler marries both of the worlds by publishing discussion events to a slack channel. It uses [Github API V3](https://developer.github.com/v3/) and [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks) to the integration.
+Github Discussions Crawler marries both of the worlds by publishing discussion events to a slack channel. It uses [Github API V3](https://developer.github.com/v3/) and [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks) for the integration.
 
 # Supported events
 
-- New Discussion has been discovered
+- New discussion has been discovered
 
 <a href="url"><img src="docs/new_discussion.png" aligh="left" width="500" ></a>
 
-- New Comment has been discovered
+- New comment has been discovered
 
 <a href="url"><img src="docs/new_comment.png" aligh="left" width="500" ></a>
 
