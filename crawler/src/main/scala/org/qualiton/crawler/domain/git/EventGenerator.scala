@@ -5,6 +5,7 @@ import _root_.cats.syntax.option._
 import cats.effect.Sync
 
 import eu.timepit.refined._
+
 import org.qualiton.crawler.domain.core._
 
 object EventGenerator {

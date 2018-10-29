@@ -1,5 +1,7 @@
 package org.qualiton.crawler.server.config
 
+import scala.concurrent.duration._
+
 import ciris._
 import ciris.generic._
 import ciris.refined._
@@ -8,10 +10,9 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._
 import eu.timepit.refined.string.Url
 import eu.timepit.refined.types.string.NonEmptyString
-import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{DatabaseConfig, GitConfig, SlackConfig}
 
-import scala.concurrent.duration._
+import org.qualiton.crawler.common.config
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
 
 trait ConfigLoader {
   final def loadOrThrow(): ServiceConfig =

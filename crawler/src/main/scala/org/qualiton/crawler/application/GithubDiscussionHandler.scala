@@ -8,6 +8,7 @@ import fs2.Stream
 import fs2.concurrent.Queue
 
 import com.typesafe.scalalogging.LazyLogging
+
 import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.domain.git.{ EventGenerator, GithubClient, GithubRepository }
 

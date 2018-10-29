@@ -1,13 +1,15 @@
 package org.qualiton.crawler.common.datasource
 
-import cats.effect.{ContextShift, Effect, Sync}
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import scala.concurrent.ExecutionContext
+
+import cats.effect.{ ContextShift, Effect, Sync }
+
+import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 import doobie.hikari.HikariTransactor
 import eu.timepit.refined.auto.autoUnwrap
+
 import org.qualiton.crawler.common.config.DatabaseConfig
 import org.qualiton.crawler.common.util.Closeable
-
-import scala.concurrent.ExecutionContext
 
 object DataSource {
   def apply[F[_] : Effect : ContextShift](

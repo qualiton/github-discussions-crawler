@@ -1,6 +1,7 @@
 package org.qualiton.crawler.infrastructure.http.slack
 
 import eu.timepit.refined.auto.autoUnwrap
+
 import org.qualiton.crawler.domain.core.{ Event, NewCommentsDiscoveredEvent, NewDiscussionDiscoveredEvent }
 import org.qualiton.crawler.infrastructure.http.slack.SlackHttp4sClient.{ Attachment, Color, Field, IncomingWebhookMessage }
 

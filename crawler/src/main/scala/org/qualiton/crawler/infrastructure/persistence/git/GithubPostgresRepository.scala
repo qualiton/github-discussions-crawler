@@ -14,6 +14,7 @@ import doobie.implicits._
 import doobie.util.query.Query0
 import doobie.util.update.Update0
 import io.circe.generic.auto._
+
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.git.{ Discussion, GithubRepository }
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ selectDiscussionQuery, selectLatestUpdatedAt }

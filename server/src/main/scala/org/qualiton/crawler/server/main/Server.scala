@@ -7,6 +7,7 @@ import fs2.Stream
 import fs2.concurrent.Queue
 
 import com.typesafe.scalalogging.LazyLogging
+
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.flyway.FlywayUpdater

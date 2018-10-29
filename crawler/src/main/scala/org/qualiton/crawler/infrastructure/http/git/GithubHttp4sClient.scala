@@ -22,6 +22,7 @@ import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.headers.{ Accept, Authorization }
+
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
 import org.qualiton.crawler.infrastructure.http.git.GithubHttp4sClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
