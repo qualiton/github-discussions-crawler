@@ -1,5 +1,7 @@
 package org.qualiton.crawler.server.config
 
+import scala.concurrent.duration._
+
 import ciris._
 import ciris.generic._
 import ciris.refined._
@@ -8,10 +10,9 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._
 import eu.timepit.refined.string.Url
 import eu.timepit.refined.types.string.NonEmptyString
-import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{DatabaseConfig, GitConfig, SlackConfig}
 
-import scala.concurrent.duration._
+import org.qualiton.crawler.common.config
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
 
 trait ConfigLoader {
   final def loadOrThrow(): ServiceConfig =
@@ -26,17 +27,19 @@ object DefaultConfigLoader extends ConfigLoader {
 
     loadConfig(
       env[NonEmptyString]("GITHUB_API_TOKEN"),
+      env[Option[FiniteDuration]]("GITHUB_REFRESH_INTERVAL"),
       env[NonEmptyString]("SLACK_API_TOKEN"),
       env[Option[Boolean]]("SLACK_DISABLE_PUBLISH"),
       env[String Refined Url]("DATABASE_JDBC_URL"),
       env[NonEmptyString]("DATABASE_USERNAME"),
       env[NonEmptyString]("DATABASE_PASSWORD")
-    ) { (githubApiToken, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword) =>
+    ) { (githubApiToken, githubRefreshInterval, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword) =>
       ServiceConfig(
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
           requestTimeout = 5.seconds,
-          apiToken = config.Secret(githubApiToken)),
+          apiToken = config.Secret(githubApiToken),
+          refreshInterval = githubRefreshInterval.getOrElse(1.minute)),
         slackConfig = SlackConfig(
           baseUri = "https://hooks.slack.com/services/",
           requestTimeout = 5.seconds,

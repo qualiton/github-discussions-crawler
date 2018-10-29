@@ -11,6 +11,7 @@ import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.refineV
 import eu.timepit.refined.string.{ Url => RefinedUrl }
 import eu.timepit.refined.types.string.NonEmptyString
+
 import org.qualiton.crawler.domain.core.Url
 import org.qualiton.crawler.domain.git.{ Comment, Discussion, ValidationError }
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ CommentPersistence, CommentsListPersistence, DiscussionPersistence }

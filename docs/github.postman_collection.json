@@ -1,0 +1,119 @@
+{
+  "variables": [],
+  "info": {
+    "name": "github",
+    "_postman_id": "cd5e88df-cd8e-6160-cb75-6b2e052d0b14",
+    "description": "",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Team",
+      "request": {
+        "url": "https://api.github.com/user/teams\n",
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "description": ""
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{github_api_token_base64}}",
+            "description": ""
+          }
+        ],
+        "body": {},
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "Get Team Discussions",
+      "request": {
+        "url": "https://api.github.com/teams/2756194/discussions",
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/vnd.github.echo-preview+json",
+            "description": ""
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{github_api_token_base64}}",
+            "description": ""
+          }
+        ],
+        "body": {},
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "Get Team Discussions Comments",
+      "request": {
+        "url": "https://api.github.com/teams/2756194/discussions/11/comments",
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/vnd.github.echo-preview+json",
+            "description": ""
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{github_api_token_base64}}",
+            "description": ""
+          }
+        ],
+        "body": {},
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "Get Team Discussions Reactions",
+      "request": {
+        "url": "https://api.github.com/teams/2756194/discussions/11/reactions",
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/vnd.github.squirrel-girl-preview+json",
+            "description": ""
+          },
+          {
+            "key": "Authorization",
+            "value": "Basic {{github_api_token_base64}}",
+            "description": ""
+          }
+        ],
+        "body": {},
+        "description": ""
+      },
+      "response": []
+    },
+    {
+      "name": "Publish to Slack",
+      "request": {
+        "url": "https://hooks.slack.com/services/{{slack_api_token}}",
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "description": ""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"attachments\": [\n        {\n\t\t\t\"pretext\": \"2 new comments have been discovered\",\n            \"color\": \"good\",\n            \"author_name\": \"klachata\",\n            \"title\": \"How to use cats-mtl in legacy services\",\n            \"title_link\": \"https://github.com/orgs/ovotech/teams/boost-vibe/discussions/11\",\n            \"author_icon\": \"https://avatars0.githubusercontent.com/u/5830214?v=4\",\n\t\t\t\"image_url\": \"http://my-website.com/path/to/image.jpg\",\n\t\t\t\"fields\": [\n                {\n                    \"title\": \"Team\",\n                    \"value\": \"Rock Stars\",\n                    \"short\": true\n                },\n                {\n                    \"title\": \"Comments\",\n                    \"value\": \"5\",\n                    \"short\": true\n                },\n\t\t\t\t{\n                    \"title\": \"Targeted\",\n                    \"value\": \"@lachatak, #rock_star_devs\",\n                    \"short\": false\n                }\n            ],\n            \"ts\": 1540849398\n        }\n    ]\n}"
+        },
+        "description": ""
+      },
+      "response": []
+    }
+  ]
+}

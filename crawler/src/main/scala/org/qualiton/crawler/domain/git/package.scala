@@ -4,6 +4,7 @@ import java.time.Instant
 
 import eu.timepit.refined.auto.autoUnwrap
 import eu.timepit.refined.types.string.NonEmptyString
+
 import org.qualiton.crawler.domain.core.Url
 
 package git {

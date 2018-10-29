@@ -11,7 +11,7 @@ import fs2.concurrent.Queue
 
 import org.qualiton.crawler.common.config.SlackConfig
 import org.qualiton.crawler.domain.core.Event
-import org.qualiton.crawler.infrastructure.http.slack.SlackHttp4sClient
+import org.qualiton.crawler.infrastructure.rest.slack.SlackHttp4sClient
 
 object SlackStream {
 
