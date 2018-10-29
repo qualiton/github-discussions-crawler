@@ -9,10 +9,12 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 # Supported events
 
 - New Discussion has been discovered
-<a href="url"><img src="docs/new_discussion.png" width="500" ></a>
+
+<a href="url"><img src="docs/new_discussion.png" aligh="left" width="500" ></a>
 
 - New Comment has been discovered
-<a href="url"><img src="docs/new_comment.png" width="500" ></a>
+
+<a href="url"><img src="docs/new_comment.png" aligh="left" width="500" ></a>
 
 # Prerequisites
 
