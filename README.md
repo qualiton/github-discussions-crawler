@@ -8,11 +8,11 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 # Supported events
 
-- New Discussion was discovered
-![Alt text](docs/new_discussion.png?raw=true "New Discussion")
+- New Discussion has been discovered
+<a href="url"><img src="docs/new_discussion.png" width="500" ></a>
 
-- New Comment was discovered
-![Alt text](docs/new_comment.png?raw=true "New Comment")
+- New Comment has been discovered
+<a href="url"><img src="docs/new_comment.png" width="500" ></a>
 
 # Prerequisites
 
