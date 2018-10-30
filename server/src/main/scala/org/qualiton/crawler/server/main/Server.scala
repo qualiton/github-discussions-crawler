@@ -11,7 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.flyway.FlywayUpdater
-import org.qualiton.crawler.infrastructure.{ GithubStream, SlackStream }
+import org.qualiton.crawler.infrastructure.{ GithubStream, HealthcheckHttpServerStream, SlackStream }
 import org.qualiton.crawler.server.config.ServiceConfig
 
 object Server extends LazyLogging {
@@ -27,19 +27,17 @@ object Server extends LazyLogging {
       dataSource <- DataSource(config.databaseConfig, ec, ec)
     } yield (config, dataSource)
 
-    val appStream: (ServiceConfig, DataSource[F]) => Stream[F, ExitCode] = (serviceConfig, dataSource) => {
-      val stream: Stream[F, Unit] = for {
+    val appStream: (ServiceConfig, DataSource[F]) => Stream[F, ExitCode] = (serviceConfig, dataSource) =>
+      for {
         _ <- Stream.eval(FlywayUpdater(dataSource))
         eventQueue <- Stream.eval(Queue.bounded[F, Event](100))
         gitStream = GithubStream(eventQueue, dataSource, serviceConfig.gitConfig, loggerErrorHandler)
         slackStream = SlackStream(eventQueue, serviceConfig.slackConfig)
-        stream <- Stream(gitStream, slackStream)
-          .parJoin(2)
+        httpStream = HealthcheckHttpServerStream(serviceConfig.httpPort)
+        stream <- Stream(httpStream, gitStream.drain, slackStream.drain)
+          .parJoin(3)
           .handleErrorWith(t => Stream.eval_(loggerErrorHandler(t)))
       } yield stream
-
-      stream.drain.as(ExitCode.Success)
-    }
 
     val release: DataSource[F] => F[Unit] = _.close
 

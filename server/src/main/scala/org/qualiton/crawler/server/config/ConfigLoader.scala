@@ -9,6 +9,7 @@ import ciris.syntax._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._
 import eu.timepit.refined.string.Url
+import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.string.NonEmptyString
 
 import org.qualiton.crawler.common.config
@@ -32,9 +33,11 @@ object DefaultConfigLoader extends ConfigLoader {
       env[Option[Boolean]]("SLACK_DISABLE_PUBLISH"),
       env[String Refined Url]("DATABASE_JDBC_URL"),
       env[NonEmptyString]("DATABASE_USERNAME"),
-      env[NonEmptyString]("DATABASE_PASSWORD")
-    ) { (githubApiToken, githubRefreshInterval, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword) =>
+      env[NonEmptyString]("DATABASE_PASSWORD"),
+      env[Option[UserPortNumber]]("HTTP_PORT"),
+    ) { (githubApiToken, githubRefreshInterval, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword, httpPort) =>
       ServiceConfig(
+        httpPort = httpPort.getOrElse(9000),
         gitConfig = GitConfig(
           baseUrl = "https://api.github.com",
           requestTimeout = 5.seconds,

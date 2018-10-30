@@ -23,9 +23,9 @@ class GithubDiscussionHandler[F[_] : Effect] private(
       _ <- EitherT.liftF(Stream.eval(Sync[F].delay(logger.info(s"Synchronizing discussions updated after $lastUpdatedAt"))))
       currentDiscussion <- githubClient.getTeamDiscussionsUpdatedAfter(lastUpdatedAt)
       maybePreviousDiscussion <- EitherT(Stream.eval(githubRepository.find(currentDiscussion.teamId, currentDiscussion.discussionId)))
-      event <- EitherT.liftF(Stream.eval(EventGenerator.generateEvent(maybePreviousDiscussion, currentDiscussion)))
+      maybeEvent <- EitherT.liftF(Stream.eval(EventGenerator.generateEvent(maybePreviousDiscussion, currentDiscussion)))
       _ <- EitherT.liftF(Stream.eval(githubRepository.save(currentDiscussion)))
-      _ <- EitherT.liftF(Stream.eval(event.traverse(eventQueue.enqueue1)))
+      _ <- EitherT.liftF(Stream.eval(maybeEvent.traverse(eventQueue.enqueue1)))
     } yield ()
 
     program.value
