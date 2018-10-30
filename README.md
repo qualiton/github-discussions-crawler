@@ -20,10 +20,10 @@ Both of the events are extracting targeted users and teams by scanning the messa
 
 ## Prerequisites
 
-- Kubernetes cluster on Google Container Engine (GKE)
-- Kubernetes namespace to install the chart
+- Kubernetes cluster with helm/tiller installed
+- Kubernetes namespace to install the chart into
 - Postgres SQL database to store Github discussion details
-- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from.
+- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from
 - Slack Incoming Webhooks configured for your preferred slack channel.
 
 ## Installing the Chart
@@ -76,6 +76,7 @@ To be able to run with GCP SQL you have to install [gcloud-sqlproxy](https://git
 ## Future improvements
 
 - Send personalised slack message to individuals and/or teams
+- Convert into a **slack bot** to be able to get team discussion stats directly into a slack room
 - Integrate with [Github Reactions Api](https://developer.github.com/v3/reactions/)
 - Add more event types like `Discussion has been closed`, `Comment body has changed`
 
