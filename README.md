@@ -48,11 +48,11 @@ helm upgrade github-discussions-crawler qualiton/github-discussions-crawler -f v
 
 ```yaml
 github:
-  api-token: GITHUB_API_TOKEN
+  api_token: GITHUB_API_TOKEN
 slack:
-  api-token: SLACK_API_TOKEN
+  api_token: SLACK_API_TOKEN
 database:
-  jdbc-url: JDBC_URL
+  jdbc_url: JDBC_URL
   username: USERNAME
   password: PASSWORD
 ```
