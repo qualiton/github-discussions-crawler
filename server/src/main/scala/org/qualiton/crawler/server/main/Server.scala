@@ -13,12 +13,13 @@ import org.qualiton.crawler.domain.core.Event
 import org.qualiton.crawler.flyway.FlywayUpdater
 import org.qualiton.crawler.infrastructure.{ GithubStream, HealthcheckHttpServerStream, SlackStream }
 import org.qualiton.crawler.server.config.ServiceConfig
+import org.qualiton.crawler.common.concurrent.CachedExecutionContext
 
 object Server extends LazyLogging {
 
   def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig]): Stream[F, ExitCode] = {
 
-    implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+    implicit val ec = CachedExecutionContext.default
 
     val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => Sync[F].delay(logger.error(t.getMessage, t))
 
