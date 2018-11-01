@@ -8,7 +8,7 @@ import ciris.refined._
 import ciris.syntax._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._
-import eu.timepit.refined.string.Url
+import eu.timepit.refined.string.Uri
 import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.string.NonEmptyString
 
@@ -31,7 +31,7 @@ object DefaultConfigLoader extends ConfigLoader {
       env[Option[FiniteDuration]]("GITHUB_REFRESH_INTERVAL"),
       env[NonEmptyString]("SLACK_API_TOKEN"),
       env[Option[Boolean]]("SLACK_DISABLE_PUBLISH"),
-      env[String Refined Url]("DATABASE_JDBC_URL"),
+      env[String Refined Uri]("DATABASE_JDBC_URL"),
       env[NonEmptyString]("DATABASE_USERNAME"),
       env[NonEmptyString]("DATABASE_PASSWORD"),
       env[Option[UserPortNumber]]("HTTP_PORT"),
