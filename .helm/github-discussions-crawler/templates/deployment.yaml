@@ -66,4 +66,4 @@ spec:
             path: {{ .Values.service.probe.livenessPath }}
             port: {{ .Values.service.httpPort }}
         resources:
-  {{ toYaml .Values.resources | indent 14 }}
+{{ toYaml .Values.resources | indent 14 }}
