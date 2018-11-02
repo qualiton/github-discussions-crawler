@@ -21,7 +21,6 @@ Both of the events are extracting targeted users and teams by scanning the messa
 ## Prerequisites
 
 - Kubernetes cluster with helm/tiller installed
-- Kubernetes namespace to install the chart into
 - Postgres SQL database to store Github discussion details
 - [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from
 - Slack Incoming Webhooks configured for your preferred slack channel.
@@ -36,10 +35,22 @@ helm repo add qualiton https://qualiton.github.io/github-discussions-crawler/
 ```
 > **Tip**: verify if helm sees the added chart repository `helm search github-discussions-crawler`
 
-Install from remote URL with the release name `github-discussions-crawler` into namespace `github-discussions-crawler`:
+Install from remote URL with the release name `github-discussions-crawler` into namespace `github-discussions-crawler` by specifing each parameter using the `--set key=value[,key=value]` argument to `helm upgrade `:
 
 ```bash
-helm upgrade github-discussions-crawler qualiton/github-discussions-crawler -f values.yaml --install --wait --namespace github-discussions-crawler
+helm upgrade github-discussions-crawler qualiton/github-discussions-crawler \
+	--set github.api_token=GITHUB_API_TOKEN \
+	--set slack.api_token=SLACK_API_TOKEN \
+	--set database.jdbc_url=DATABASE_JDBC_URL \
+	--set database.username=DATABASE_USERNAME \
+	--set database.password=DATABASE_PASSWORD \
+	--install --wait
+```
+
+Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
+
+```bash
+helm upgrade github-discussions-crawler qualiton/github-discussions-crawler -f values.yaml --install --wait
 ```
 
 `values.yaml` should contain every mandatory attributes to be able to populate the k8s secrets.
@@ -57,14 +68,12 @@ database:
   password: PASSWORD
 ```
 
-Alternatively specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
-
 ## Uninstalling the Chart
 
 To uninstall/delete the `github-discussions-crawler` deployment:
 
 ```bash
-helm delete github-discussions-crawler
+helm delete --purge github-discussions-crawler
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -72,6 +81,33 @@ The command removes all the Kubernetes components associated with the chart and 
 ## Running with GCP SQL
 
 To be able to run with GCP SQL you have to install [gcloud-sqlproxy](https://github.com/helm/charts/tree/master/stable/gcloud-sqlproxy) and configure the Crawler database settings to point to the gcloud-sqlproxy.
+
+Assuming that you already set the following:
+
+- Google Service Account with `Cloud SQL Client` role and furnished the key
+- Created a Google SQL instance with `gd-crawler-db` database name and `gd-crawler-user` database user name
+- You intent to use default settings for the `pg-sqlproxy`
+
+```bash
+helm upgrade github-discussions-crawler qualiton/github-discussions-crawler \
+	--set github.api_token=GITHUB_API_TOKEN \
+	--set slack.api_token=SLACK_API_TOKEN \
+	--set database.jdbc_url=jdbc:postgresql://pg-sqlproxy-gcloud-sqlproxy.github-discussions-crawler:5432/gd-crawler-db \
+	--set database.username=gd-crawler-user \
+	--set database.password=DATABASE_PASSWORD \
+	--install --wait
+```
+The Crawler will be restarted by Kubernetes since it cannot connect to the Cloud SQL but as soon as you install the proxy into namespace `github-discussions-crawler` the app will just start working.
+
+```bash
+helm upgrade pg-sqlproxy stable/gcloud-sqlproxy --namespace github-discussions-crawler \
+  	--set serviceAccountKey="$(cat service-account.json | base64)" \
+  	--set "cloudsql.instances[0].instance"=INSTANCE \
+  	--set "cloudsql.instances[0].project"=PROJECT \
+  	--set "cloudsql.instances[0].region"=REGION \
+  	--set "cloudsql.instances[0].port"=5432 \
+  	--install --wait
+```
 
 ## Future improvements
 
@@ -86,4 +122,3 @@ To be able to run with GCP SQL you have to install [gcloud-sqlproxy](https://git
 - [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
 - [Slack Incoming Webhooks](https://api.slack.com/incoming-webhooks)
 - [Cloud SQL Proxy for Postgres](https://cloud.google.com/sql/docs/postgres/sql-proxy)
-

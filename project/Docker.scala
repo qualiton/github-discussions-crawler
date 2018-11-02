@@ -12,6 +12,7 @@ object Docker extends AutoPlugin {
   private val default =
     Seq(
       javaOptions in Universal ++= Seq(
+        "-Duser.timezone=UTC",
         "-J-XX:+UnlockExperimentalVMOptions",
         "-J-XX:+UseCGroupMemoryLimitForHeap",
         "-J-XX:MaxRAMFraction=2"),

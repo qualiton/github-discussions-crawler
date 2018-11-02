@@ -14,10 +14,10 @@ service:
     livenessPath: /internal/status
 resources:
   requests:
-    memory: "64Mi"
+    memory: "512Mi"
     cpu: "250m"
   limits:
-    memory: "128Mi"
+    memory: "1024Mi"
     cpu: "500m"
 dockerhub:
   username: lachatak

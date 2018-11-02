@@ -2,6 +2,8 @@
 target/
 project/project
 !/.idea/codeStyles/
-.helm/values.yaml
+.helm/gcloud-sqlproxy-values.yaml
+.helm/github-discussions-crawler-values.yaml
+.helm/helm_upgrade.sh
 server/native
 *.tgz

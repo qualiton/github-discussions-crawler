@@ -24,6 +24,7 @@
     <appender-ref ref="STDOUT-ASYNC"/>
   </root>
 
+  <logger name="org.http4s.blaze.channel.nio1.NIO1SocketServerGroup" level="ERROR"/>
   <logger name="org.http4s.blaze.channel.ServerChannelGroup" level="ERROR"/>
   <logger name="org.http4s.blaze.channel.ServerChannelGroup" level="WARN"/>
   <!-- https://github.com/http4s/http4s/issues/1256 !-->
