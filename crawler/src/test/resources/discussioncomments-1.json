@@ -1,0 +1,35 @@
+[
+  {
+    "author": {
+      "login": "lachatak",
+      "id": 5830214,
+      "node_id": "MDQ6VXNlcjU4MzAyMTQ=",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/5830214?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/lachatak",
+      "html_url": "https://github.com/lachatak",
+      "followers_url": "https://api.github.com/users/lachatak/followers",
+      "following_url": "https://api.github.com/users/lachatak/following{/other_user}",
+      "gists_url": "https://api.github.com/users/lachatak/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/lachatak/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/lachatak/subscriptions",
+      "organizations_url": "https://api.github.com/users/lachatak/orgs",
+      "repos_url": "https://api.github.com/users/lachatak/repos",
+      "events_url": "https://api.github.com/users/lachatak/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/lachatak/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "body": "Interesting comment",
+    "body_html": "<p>Interesting comment</p>",
+    "body_version": "abf55d3127759d1716fc9d1be3c9237c",
+    "created_at": "2018-10-11T09:54:40Z",
+    "last_edited_at": null,
+    "discussion_url": "https://api.github.com/teams/TEAM_ID/discussions/DISCUSSION_ID",
+    "html_url": "https://github.com/orgs/ovotech/teams/test-team/discussions/DISCUSSION_ID/comments/1",
+    "node_id": "MDIxOlRlYW1EaXNjdXNzaW9uQ29tbWVudDc3MjM3",
+    "number": 1,
+    "updated_at": "2018-10-11T09:54:40Z",
+    "url": "https://api.github.com/teams/TEAM_ID/discussions/DISCUSSION_ID/comments/1"
+  }
+]

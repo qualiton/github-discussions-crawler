@@ -102,7 +102,9 @@ object Dependencies extends AutoPlugin {
       "org.tpolecat" %% "doobie-scalatest" % DoobieVersion,
       "com.whisk" %% "docker-testkit-impl-spotify" % DockerTestkitVersion,
       "com.whisk" %% "docker-testkit-scalatest" % DockerTestkitVersion,
-      "com.spotify" % "docker-client" % "8.11.2")
+      "com.spotify" % "docker-client" % "8.11.2",
+      "com.github.tomakehurst" % "wiremock-standalone" % "2.19.0")
+      .map(_ % "test")
 
   private val defaultDependencies: Seq[Def.Setting[Seq[ModuleID]]] =
     Seq(
@@ -117,7 +119,8 @@ object Dependencies extends AutoPlugin {
       google ++
       http4s ++
       others ++
-      logging)
+      logging ++
+      test)
 
   object autoImport {
 
