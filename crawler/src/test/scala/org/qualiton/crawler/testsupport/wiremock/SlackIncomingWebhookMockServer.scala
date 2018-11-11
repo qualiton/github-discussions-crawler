@@ -19,6 +19,8 @@ class SlackIncomingWebhookMockServer(slackIncomingWebhookPort: Int = SlackIncomi
 
   def startMockServer(): Unit = {
     server.start()
+    mockIncomingWebhook()
+    ()
   }
 
   def stopMockServer(): Unit = {

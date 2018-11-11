@@ -61,7 +61,7 @@ object GithubPostgresRepository {
       body: String,
       bodyVersion: String,
       discussionUrl: String,
-      comments: CommentsListPersistence,
+      commentsListPersistence: CommentsListPersistence,
       createdAt: Instant,
       updatedAt: Instant)
 
@@ -87,7 +87,7 @@ object GithubPostgresRepository {
     import discussionPersistence._
     sql"""
           INSERT INTO discussion (team_id, team_name, discussion_id, title, author, avatar_url, body, body_version, discussion_url, comments, created_at, updated_at)
-          VALUES($teamId, $teamName, $discussionId, $title, $author, $avatarUrl, $body, $bodyVersion, $discussionUrl, $comments, $createdAt, $updatedAt)
+          VALUES($teamId, $teamName, $discussionId, $title, $author, $avatarUrl, $body, $bodyVersion, $discussionUrl, $commentsListPersistence, $createdAt, $updatedAt)
           ON CONFLICT ON CONSTRAINT PK_DISCUSSION DO UPDATE
           SET
               team_name = $teamName,
@@ -95,7 +95,7 @@ object GithubPostgresRepository {
               body = $body,
               body_version = $bodyVersion,
               discussion_url = $discussionUrl,
-              comments = $comments,
+              comments = $commentsListPersistence,
               updated_at = $updatedAt,
               refreshed_at = now()""".update
   }
