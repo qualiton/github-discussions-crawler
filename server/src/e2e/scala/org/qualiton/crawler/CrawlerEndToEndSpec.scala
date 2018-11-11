@@ -11,6 +11,7 @@ import cats.effect.{ ExitCode, IO, IOApp }
 import cats.scalatest.{ EitherMatchers, ValidatedValues }
 import fs2.concurrent.SignallingRef
 
+import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import eu.timepit.refined._
@@ -29,7 +30,7 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 import org.qualiton.crawler.common.config
 import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
 import org.qualiton.crawler.common.datasource.DataSource
-import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ CommentsListPersistence, DiscussionPersistence }
+import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ CommentPersistence, CommentsListPersistence, DiscussionPersistence }
 import org.qualiton.crawler.server.config.ServiceConfig
 import org.qualiton.crawler.server.main.Server
 import org.qualiton.crawler.testsupport.dockerkit.PostgresDockerTestKit
@@ -52,7 +53,8 @@ class CrawlerEndToEndSpec
     with SlackIncomingWebhookMockServerSupport
     with PostgresDockerTestKit
     with Inside
-    with IOApp {
+    with IOApp
+    with LazyLogging {
 
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(
@@ -156,6 +158,74 @@ class CrawlerEndToEndSpec
         fields.downField("short").as[Boolean] should beRight(true)
       }
     }
+
+    scenario("New discussion is discovered with more comments and published to Slack") {
+      When("When there is a new discussion discovered with 2 comments")
+      val teamId1 = 1L
+      val discussionId1 = 1L
+      val referenceInstant: Instant = Instant.now()
+      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 2, referenceInstant)
+
+      Then("new discussion is persisted to db")
+      eventually {
+        val result = findDiscussionBy(teamId1, discussionId1)
+
+        inside(result) {
+          case Some(DiscussionPersistence(
+          teamId, teamName, discussionId, title, author, avatarUrl, body, _, discussionUrl,
+          CommentsListPersistence(List(
+          CommentPersistence(commentId1, commentAuthor1, commentAuthorAvatar1, commentBody1, _, commentUrl1, _, _),
+          CommentPersistence(commentId2, commentAuthor2, commentAuthorAvatar2, commentBody2, _, commentUrl2, _, _))),
+          _, _)) =>
+            teamId should ===(teamId1)
+            teamName should ===("Test Team")
+            discussionId should ===(discussionId1)
+            title should ===(s"discussion-title-$discussionId1")
+            author should ===("lachatak")
+            avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            body should ===(s"discussion-body-$discussionId1")
+            discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+
+            commentId1 should ===(2L)
+            commentAuthor1 should ===("lachatak")
+            commentAuthorAvatar1 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            commentBody1 should ===("comment-body-2")
+            commentUrl1 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/2")
+
+            commentId2 should ===(1L)
+            commentAuthor2 should ===("lachatak")
+            commentAuthorAvatar2 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            commentBody2 should ===("comment-body-1")
+            commentUrl2 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/1")
+        }
+      }
+
+      And("slack should receive the publish post request with valid attachment")
+      eventually {
+        val request = mockSlackIncomingWebhookMockServer.incomingWebhookCallRequest
+
+        val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
+        val cursor: HCursor = doc.hcursor
+        val message = cursor.downField("attachments").downArray.first
+
+        message.get[String]("pretext") should beRight("New discussion has been discovered")
+        message.get[String]("color") should beRight("good")
+        message.get[String]("author_name") should beRight("lachatak")
+        message.get[String]("author_icon") should beRight("https://avatars0.githubusercontent.com/u/5830214?v=4")
+        message.get[String]("title") should beRight(s"discussion-title-$discussionId1")
+        message.get[String]("title_link") should beRight(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+
+        val field0 = message.downField("fields").downArray.first
+        field0.get[String]("title") should beRight("Team")
+        field0.get[String]("value") should beRight("Test Team")
+        field0.get[Boolean]("short") should beRight(true)
+
+        val field1 = message.downField("fields").downArray.first.right
+        field1.get[String]("title") should beRight("Comments")
+        field1.get[String]("value") should beRight("2")
+        field1.get[Boolean]("short") should beRight(true)
+      }
+    }
   }
 
   feature("Internal status endpoint") {
@@ -169,8 +239,10 @@ class CrawlerEndToEndSpec
     }
   }
 
-  def resetTables(): Unit =
+  def resetTables(): Unit = {
+    logger.warn("Reset discussion table before next test!")
     sql"TRUNCATE TABLE discussion".update.run.transact(transactor).void.unsafeRunSync()
+  }
 
   def findDiscussionBy(teamId: Long, discussionId: Long): Option[DiscussionPersistence] =
     sql"""

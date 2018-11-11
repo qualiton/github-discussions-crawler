@@ -62,7 +62,14 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
         .withBody(prepareResponse(resource, httpStatus)
           .replaceAll("TEAM_ID", teamId.toString))))
 
-  def mockTeamDiscussions(teamId: Long, numberOfDiscussion: Int, numberOfComments: Int, referenceInstant: Instant = Instant.now(), httpStatus: Int = HttpStatus.SC_OK, resource: String = "/teamDiscussionsItem.json"): StubMapping = {
+  def mockTeamDiscussions(
+      teamId: Long,
+      numberOfDiscussion: Int,
+      numberOfComments: Int,
+      referenceInstant: Instant = Instant.now(),
+      httpStatus: Int = HttpStatus.SC_OK,
+      resource: String = "/teamDiscussionsItem.json"): StubMapping = {
+
     val body: String = {
       val counter = new AtomicLong(1)
 
@@ -99,7 +106,14 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
         .withBody(body)))
   }
 
-  def mockDiscussionComments(teamId: Long, discussionId: Long, numberOfComments: Int, referenceInstant: Instant = Instant.now(), httpStatus: Int = HttpStatus.SC_OK, resource: String = "/discussionCommentsItem.json"): StubMapping = {
+  def mockDiscussionComments(
+      teamId: Long,
+      discussionId: Long,
+      numberOfComments: Int,
+      referenceInstant: Instant = Instant.now(),
+      httpStatus: Int = HttpStatus.SC_OK,
+      resource: String = "/discussionCommentsItem.json"): StubMapping = {
+
     val body: String = {
       val counter = new AtomicLong(1)
 
@@ -134,7 +148,13 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
         .withBody(body)))
   }
 
-  def mockDiscussions(teamId: Long, numberOfDiscussion: Int, numberOfComments: Int, referenceInstant: Instant = Instant.now(), httpStatus: Int = HttpStatus.SC_OK): StubMapping = {
+  def mockDiscussions(
+      teamId: Long,
+      numberOfDiscussion: Int,
+      numberOfComments: Int,
+      referenceInstant: Instant = Instant.now(),
+      httpStatus: Int = HttpStatus.SC_OK): StubMapping = {
+
     mockUserTeams(teamId, httpStatus)
     mockTeamDiscussions(teamId, numberOfDiscussion, numberOfComments, referenceInstant, httpStatus)
   }
