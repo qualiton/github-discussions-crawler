@@ -28,6 +28,6 @@
   "html_url": "https://github.com/orgs/ovotech/teams/test-team/discussions/DISCUSSION_ID/comments/COMMENT_ID",
   "node_id": "MDIxOlRlYW1EaXNjdXNzaW9uQ29tbWVudDc3MjM3",
   "number": NUMBER,
-  "updated_at": "2018-10-11T09:54:40Z",
+  "updated_at": "CREATED_AT",
   "url": "https://api.github.com/teams/TEAM_ID/discussions/DISCUSSION_ID/comments/COMMENT_ID"
 }

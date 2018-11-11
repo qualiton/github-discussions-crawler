@@ -38,7 +38,7 @@ class SlackHttp4sClient[F[_] : Effect] private(client: Client[F], slackConfig: S
       uri = apiToken.value.split("/").foldLeft(Uri.unsafeFromString(baseUri))(_ / _),
       headers = Headers(Accept(json))).withEntity(requestBody)
 
-    logger.info(s"sending to ${ request.uri } - $requestBody")
+    logger.debug(s"sending to ${ request.uri } - $requestBody")
     client.status(request)
   }
 }

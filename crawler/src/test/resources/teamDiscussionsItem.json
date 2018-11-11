@@ -33,6 +33,6 @@
   "private": false,
   "team_url": "https://api.github.com/teams/TEAM_ID",
   "title": "TITLE",
-  "updated_at": "2018-11-02T07:25:57Z",
+  "updated_at": "CREATED_AT",
   "url": "https://api.github.com/teams/TEAM_ID/discussions/DISCUSSION_ID"
 }

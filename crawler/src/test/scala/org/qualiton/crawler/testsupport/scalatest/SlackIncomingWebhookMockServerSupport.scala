@@ -3,22 +3,22 @@ package org.qualiton.crawler.testsupport.scalatest
 import org.scalatest.{ BeforeAndAfterAll, Suite }
 
 import org.qualiton.crawler.testsupport.resource.ResourceSupport
-import org.qualiton.crawler.testsupport.wiremock.GithubApiV3MockServer
+import org.qualiton.crawler.testsupport.wiremock.SlackIncomingWebhookMockServer
 
-trait GithubApiV3MockServerSupport
+trait SlackIncomingWebhookMockServerSupport
   extends BeforeAndAfterAll
     with ResourceSupport {
   this: Suite =>
 
-  val mockGithubApiV3MockServer = new GithubApiV3MockServer()
+  val mockSlackIncomingWebhookMockServer = new SlackIncomingWebhookMockServer()
 
   override def beforeAll(): Unit = {
-    mockGithubApiV3MockServer.startMockServer()
+    mockSlackIncomingWebhookMockServer.startMockServer()
     super.beforeAll()
   }
 
   override def afterAll: Unit = {
-    mockGithubApiV3MockServer.stopMockServer()
+    mockSlackIncomingWebhookMockServer.stopMockServer()
     super.afterAll()
   }
 }

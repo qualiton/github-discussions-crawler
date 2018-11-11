@@ -10,4 +10,5 @@ final case class SlackConfig(
     baseUri: String Refined Uri,
     requestTimeout: Duration,
     apiToken: Secret[NonEmptyString],
-    enableNotificationPublish: Boolean)
+    enableNotificationPublish: Boolean,
+    ignoreEarlierThan: Duration)
