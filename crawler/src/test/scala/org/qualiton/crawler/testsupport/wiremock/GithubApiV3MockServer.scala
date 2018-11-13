@@ -75,10 +75,10 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
 
       def discussionArrayItem = {
         val current = counter.getAndIncrement()
-        mockDiscussionComments(teamId, current, numberOfComments, referenceInstant, httpStatus)
+        mockDiscussionComments(teamId, current, numberOfComments, referenceInstant.plus(current, ChronoUnit.HOURS), httpStatus)
         parse(loadResource(resource)
           .replaceAll("TEAM_ID", teamId.toString)
-          .replaceAll("BODY", s"discussion-body-$current")
+          .replaceAll("BODY", s"discussion-body-$current @targeted-person-$current #targeted-channel-$current")
           .replaceAll("COMMENTS", numberOfComments.toString)
           .replaceAll("DISCUSSION_ID", current.toString)
           .replaceAll("CREATED_AT", referenceInstant.plus(current, ChronoUnit.HOURS).toString)
@@ -121,7 +121,7 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
         val current = counter.getAndIncrement()
         parse(loadResource(resource)
           .replaceAll("TEAM_ID", teamId.toString)
-          .replaceAll("BODY", s"comment-body-$current")
+          .replaceAll("BODY", s"comment-body-$current @targeted-person-$current #targeted-channel-$current")
           .replaceAll("DISCUSSION_ID", discussionId.toString)
           .replaceAll("COMMENT_ID", current.toString)
           .replaceAll("CREATED_AT", referenceInstant.plus(current, ChronoUnit.HOURS).toString)

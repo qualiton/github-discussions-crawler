@@ -34,6 +34,9 @@ class SlackIncomingWebhookMockServer(slackIncomingWebhookPort: Int = SlackIncomi
 
   def incomingWebhookCallRequest(): LoggedRequest =
     wireMock.find(postRequestedFor(urlEqualTo(s"/$testApiToken"))).asScala.last
+
+  def resetRequests(): Unit =
+    wireMock.resetRequests()
 }
 
 object SlackIncomingWebhookMockServer {

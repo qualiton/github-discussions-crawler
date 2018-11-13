@@ -10,8 +10,8 @@ import org.qualiton.crawler.domain.core.Url
 package git {
 
   sealed trait Targetable {
-    private val Person = "(@[0-9a-zA-Z]+)".r
-    private val Team = """(#[a-z_\\-]+)""".r
+    private val Person = """(@[0-9a-zA-Z_\\-]+)""".r
+    private val Team = """(#[0-9a-zA-Z_\\-]+)""".r
 
     def body: NonEmptyString
 

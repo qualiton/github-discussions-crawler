@@ -131,7 +131,7 @@ class CrawlerEndToEndSpec
             title should ===(s"discussion-title-$discussionId1")
             author should ===("lachatak")
             avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            body should ===(s"discussion-body-$discussionId1")
+            body should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
             discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
             comments should have size 0L
         }
@@ -152,10 +152,15 @@ class CrawlerEndToEndSpec
         message.downField("title").as[String] should beRight(s"discussion-title-$discussionId1")
         message.downField("title_link").as[String] should beRight(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
 
-        val fields = message.downField("fields").downArray.first
-        fields.downField("title").as[String] should beRight("Team")
-        fields.downField("value").as[String] should beRight("Test Team")
-        fields.downField("short").as[Boolean] should beRight(true)
+        val fields0 = message.downField("fields").downArray.first
+        fields0.downField("title").as[String] should beRight("Team")
+        fields0.downField("value").as[String] should beRight("Test Team")
+        fields0.downField("short").as[Boolean] should beRight(true)
+
+        val fields1 = message.downField("fields").downArray.first.right
+        fields1.downField("title").as[String] should beRight("Targeted")
+        fields1.downField("value").as[String] should beRight(s"@targeted-person-$discussionId1, #targeted-channel-$discussionId1")
+        fields1.downField("short").as[Boolean] should beRight(false)
       }
     }
 
@@ -173,9 +178,9 @@ class CrawlerEndToEndSpec
         inside(result) {
           case Some(DiscussionPersistence(
           teamId, teamName, discussionId, title, author, avatarUrl, body, _, discussionUrl,
-          CommentsListPersistence(List(
-          CommentPersistence(commentId1, commentAuthor1, commentAuthorAvatar1, commentBody1, _, commentUrl1, _, _),
-          CommentPersistence(commentId2, commentAuthor2, commentAuthorAvatar2, commentBody2, _, commentUrl2, _, _))),
+          c@CommentsListPersistence(List(
+          CommentPersistence(commentId2, commentAuthor2, commentAuthorAvatar2, commentBody2, _, commentUrl2, _, _),
+          CommentPersistence(commentId1, commentAuthor1, commentAuthorAvatar1, commentBody1, _, commentUrl1, _, _))),
           _, _)) =>
             teamId should ===(teamId1)
             teamName should ===("Test Team")
@@ -183,20 +188,21 @@ class CrawlerEndToEndSpec
             title should ===(s"discussion-title-$discussionId1")
             author should ===("lachatak")
             avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            body should ===(s"discussion-body-$discussionId1")
+            body should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
             discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+            c.comments should have size 2L
 
-            commentId1 should ===(2L)
-            commentAuthor1 should ===("lachatak")
-            commentAuthorAvatar1 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            commentBody1 should ===("comment-body-2")
-            commentUrl1 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/2")
-
-            commentId2 should ===(1L)
+            commentId2 should ===(commentId2)
             commentAuthor2 should ===("lachatak")
             commentAuthorAvatar2 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            commentBody2 should ===("comment-body-1")
-            commentUrl2 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/1")
+            commentBody2 should ===(s"comment-body-$commentId2 @targeted-person-$commentId2 #targeted-channel-$commentId2")
+            commentUrl2 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId2")
+
+            commentId1 should ===(commentId1)
+            commentAuthor1 should ===("lachatak")
+            commentAuthorAvatar1 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            commentBody1 should ===(s"comment-body-$commentId1 @targeted-person-$commentId1 #targeted-channel-$commentId1")
+            commentUrl1 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId1")
         }
       }
 
@@ -224,6 +230,90 @@ class CrawlerEndToEndSpec
         field1.get[String]("title") should beRight("Comments")
         field1.get[String]("value") should beRight("2")
         field1.get[Boolean]("short") should beRight(true)
+
+        val fields2 = message.downField("fields").downArray.first.right.right
+        fields2.downField("title").as[String] should beRight("Targeted")
+        fields2.downField("value").as[String] should beRight(s"@targeted-person-$discussionId1, #targeted-channel-$discussionId1")
+        fields2.downField("short").as[Boolean] should beRight(false)
+      }
+    }
+  }
+
+  feature("Crawler publishes new comment discovered event") {
+    scenario("New comment is discovered and published to Slack") {
+      Given("there is a discussion with 0 comment")
+      val teamId1 = 1L
+      val discussionId1 = 1L
+      val commentId = 1L
+      val referenceInstant: Instant = Instant.now()
+      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
+      val firstUpdatedAt: Instant = eventually {
+        val result = findDiscussionBy(teamId1, discussionId1)
+        result.value.updatedAt
+      }
+
+      Then("a new comment is discovered")
+      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 1, referenceInstant)
+
+      Then("the new comment is persisted to db")
+      eventually {
+        val result = findDiscussionBy(teamId1, discussionId1)
+
+        inside(result) {
+          case Some(DiscussionPersistence(
+          teamId, teamName, discussionId, title, author, avatarUrl, body, _, discussionUrl,
+          c@CommentsListPersistence(List(
+          CommentPersistence(commentId, commentAuthor, commentAuthorAvatar, commentBody, _, commentUrl, _, commentLatestUpdatedAt))),
+          _, latestUpdatedAt)) =>
+            teamId should ===(teamId1)
+            teamName should ===("Test Team")
+            discussionId should ===(discussionId1)
+            title should ===(s"discussion-title-$discussionId1")
+            author should ===("lachatak")
+            avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            body should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
+            discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+            c.comments should have size 1L
+            latestUpdatedAt isAfter firstUpdatedAt
+            commentLatestUpdatedAt isAfter firstUpdatedAt
+
+            commentId should ===(commentId)
+            commentAuthor should ===("lachatak")
+            commentAuthorAvatar should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            commentBody should ===(s"comment-body-$commentId @targeted-person-$commentId #targeted-channel-$commentId")
+            commentUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId")
+        }
+      }
+
+      And("slack should receive the publish post request with valid attachment")
+      eventually {
+        val request = mockSlackIncomingWebhookMockServer.incomingWebhookCallRequest
+
+        val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
+        val cursor: HCursor = doc.hcursor
+        val message = cursor.downField("attachments").downArray.first
+
+        message.get[String]("pretext") should beRight("New comment has been discovered")
+        message.get[String]("color") should beRight("good")
+        message.get[String]("author_name") should beRight("lachatak")
+        message.get[String]("author_icon") should beRight("https://avatars0.githubusercontent.com/u/5830214?v=4")
+        message.get[String]("title") should beRight(s"discussion-title-$discussionId1")
+        message.get[String]("title_link") should beRight(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId")
+
+        val field0 = message.downField("fields").downArray.first
+        field0.get[String]("title") should beRight("Team")
+        field0.get[String]("value") should beRight("Test Team")
+        field0.get[Boolean]("short") should beRight(true)
+
+        val field1 = message.downField("fields").downArray.first.right
+        field1.get[String]("title") should beRight("Comments")
+        field1.get[String]("value") should beRight("1")
+        field1.get[Boolean]("short") should beRight(true)
+
+        val fields2 = message.downField("fields").downArray.first.right.right
+        fields2.downField("title").as[String] should beRight("Targeted")
+        fields2.downField("value").as[String] should beRight(s"@targeted-person-$commentId, #targeted-channel-$commentId")
+        fields2.downField("short").as[Boolean] should beRight(false)
       }
     }
   }
@@ -250,3 +340,4 @@ class CrawlerEndToEndSpec
       FROM discussion
       WHERE team_id = $teamId AND discussion_id = $discussionId""".query[DiscussionPersistence].option.transact(transactor).unsafeRunSync()
 }
+
