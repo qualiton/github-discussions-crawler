@@ -11,7 +11,7 @@ import shapeless.{ Witness => W }
 
 package object core {
 
-  type TargetedSpec = MatchesRegex[W.`"@[a-z]+|#[a-z_\\\\-]+"`.T]
+  type TargetedSpec = MatchesRegex[W.`"@[0-9a-zA-Z\\\\-_]+|#[0-9a-zA-Z-_]+"`.T]
   type Targeted = String Refined TargetedSpec
 
   type Url = String Refined RefinedUrl

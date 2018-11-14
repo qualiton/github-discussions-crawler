@@ -17,7 +17,11 @@ object SlackStream {
 
   def apply[F[_] : ConcurrentEffect](
       eventQueue: Queue[F, Event],
-      slackConfig: SlackConfig)(implicit ec: ExecutionContext): Stream[F, Unit] =
+      slackConfig: SlackConfig)(implicit ec: ExecutionContext): Stream[F, Unit] = {
+
+    def isEventRecent(event: Event): Boolean =
+      Instant.now().minus(slackConfig.ignoreEarlierThan.toHours, ChronoUnit.HOURS) isBefore event.createdAt
+
     for {
       slackClient <- SlackHttp4sClient.stream(slackConfig)
       event <- eventQueue.dequeue
@@ -28,7 +32,5 @@ object SlackStream {
           Stream.empty
         }
     } yield ()
-
-  private def isEventRecent(event: Event): Boolean =
-    Instant.now().minus(6, ChronoUnit.HOURS) isBefore event.createdAt
+  }
 }

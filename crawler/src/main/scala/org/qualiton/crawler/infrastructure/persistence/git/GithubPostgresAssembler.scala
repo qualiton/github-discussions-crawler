@@ -31,7 +31,7 @@ object GithubPostgresAssembler {
       body = discussion.body,
       bodyVersion = discussion.bodyVersion,
       discussionUrl = discussion.discussionUrl,
-      comments = CommentsListPersistence(comments.map(c => CommentPersistence(
+      commentsListPersistence = CommentsListPersistence(comments.map(c => CommentPersistence(
         commentId = c.commentId,
         author = c.author,
         avatarUrl = c.avatarUrl,
@@ -55,7 +55,7 @@ object GithubPostgresAssembler {
     val bodyVersionValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](bodyVersion).leftMap(ValidationError(_)).toValidatedNel
     val discussionUrlValidated: ValidatedNel[ValidationError, Url] = refineV[RefinedUrl](discussionUrl).leftMap(ValidationError(_)).toValidatedNel
 
-    val commentsValidated: ValidatedNel[ValidationError, List[Comment]] = comments.comments.traverse(toComment)
+    val commentsValidated: ValidatedNel[ValidationError, List[Comment]] = commentsListPersistence.comments.traverse(toComment)
 
     val discussionValidated: ValidatedNel[ValidationError, Discussion] =
       (teamNameValidated, titleValidated, authorValidated, avatarUrlValidated, bodyValidated, bodyVersionValidated, discussionUrlValidated, commentsValidated)

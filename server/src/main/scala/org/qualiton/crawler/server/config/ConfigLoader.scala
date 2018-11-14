@@ -47,7 +47,8 @@ object DefaultConfigLoader extends ConfigLoader {
           baseUri = "https://hooks.slack.com/services/",
           requestTimeout = 5.seconds,
           apiToken = config.Secret(slackApiToken),
-          enableNotificationPublish = slackDisablePublish.map(!_).getOrElse(true)),
+          enableNotificationPublish = slackDisablePublish.map(!_).getOrElse(true),
+          ignoreEarlierThan = 6.hours),
         databaseConfig =
           DatabaseConfig(
             databaseDriverName = "org.postgresql.Driver",

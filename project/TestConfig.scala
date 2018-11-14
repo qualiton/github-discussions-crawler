@@ -15,6 +15,7 @@ object TestConfig extends AutoPlugin {
       def withTestConfig: Project =
         project
           .configs(EndToEndTest, IntegrationTest)
+          .settings(javaOptions in Test += "-Duser.timezone=UTC")
           .settings(integrationTestSettings, endToEndTestSettings)
           .settings(
             e2e := (test in EndToEndTest).value,
