@@ -4,52 +4,45 @@ package git
 import java.time.Instant
 
 import cats.effect.{ ContextShift, Effect, Sync }
-import cats.syntax.applicativeError._
+import cats.instances.option._
+import cats.syntax.flatMap._
 import cats.syntax.functor._
+import cats.syntax.traverse._
 import fs2.Stream
 
 import doobie.Meta
-import doobie.free.connection.{ delay, ConnectionIO }
+import doobie.free.connection.delay
 import doobie.implicits._
 import doobie.util.query.Query0
+import doobie.util.transactor.Transactor
 import doobie.util.update.Update0
 import io.circe.generic.auto._
 
-import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.git.{ Discussion, GithubRepository }
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ selectDiscussionQuery, selectLatestUpdatedAt }
 import org.qualiton.crawler.infrastructure.persistence.meta.codecMeta
 
-class GithubPostgresRepository[F[_] : Effect : ContextShift] private(dataSource: DataSource[F]) extends GithubRepository[F] {
-
-  private val transactor = dataSource.hikariTransactor
+class GithubPostgresRepository[F[_] : Effect : ContextShift] private(transactor: Transactor[F]) extends GithubRepository[F] {
 
   override def findLastUpdatedAt: F[Instant] =
-    selectLatestUpdatedAt.unique.transact(transactor)
+    selectLatestUpdatedAt.unique
+      .transact(transactor)
 
-  override def find(teamId: Long, discussionId: Long): F[Either[Throwable, Option[Discussion]]] = {
-    val find: ConnectionIO[Option[Discussion]] = for {
-      maybeDiscussion <- selectDiscussionQuery(teamId, discussionId).option
-      maybeTeamDiscussion <- delay(maybeDiscussion.flatMap(d => GithubPostgresAssembler.toDomain(d).toOption))
-    } yield maybeTeamDiscussion
+  override def find(teamId: Long, discussionId: Long): F[Option[Discussion]] =
+    selectDiscussionQuery(teamId, discussionId).option
+      .transact(transactor)
+      .flatMap(_.traverse(GithubPostgresAssembler.toDomain[F]))
 
-    find.transact(transactor).attempt
-  }
-
-  override def save(discussion: Discussion): F[Either[Throwable, Unit]] = {
-    val save: ConnectionIO[Unit] = for {
-      newTeamDiscussion <- delay(GithubPostgresAssembler.fromDomain(discussion))
-      _ <- GithubPostgresRepository.insertDiscussionUpdate(newTeamDiscussion).run.void
-    } yield ()
-
-    save.transact(transactor).attempt
-  }
+  override def save(discussion: Discussion): F[Unit] =
+    delay(GithubPostgresAssembler.fromDomain(discussion))
+      .flatMap(p => GithubPostgresRepository.insertDiscussionUpdate(p).run.void)
+      .transact(transactor)
 }
 
 object GithubPostgresRepository {
 
-  def stream[F[_] : Effect : ContextShift](dataSource: DataSource[F]): Stream[F, GithubRepository[F]] =
-    Stream.eval(Sync[F].delay(new GithubPostgresRepository[F](dataSource)))
+  def stream[F[_] : Effect : ContextShift](transactor: Transactor[F]): Stream[F, GithubRepository[F]] =
+    Stream.eval(Sync[F].delay(new GithubPostgresRepository[F](transactor)))
 
   final case class DiscussionPersistence(
       teamId: Long,
