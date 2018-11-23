@@ -1,9 +1,10 @@
-package org.qualiton.crawler.infrastructure.persistence
+package org.qualiton.crawler
+package infrastructure.persistence
 package git
 
 import java.time.Instant
 
-import cats.effect.{ ContextShift, Effect, Sync }
+import cats.effect.{ ContextShift, Effect }
 import cats.instances.option._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -18,6 +19,7 @@ import doobie.util.transactor.Transactor
 import doobie.util.update.Update0
 import io.circe.generic.auto._
 
+import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.git.{ Discussion, GithubRepository }
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ selectDiscussionQuery, selectLatestUpdatedAt }
 import org.qualiton.crawler.infrastructure.persistence.meta.codecMeta
@@ -41,8 +43,8 @@ class GithubPostgresRepository[F[_] : Effect : ContextShift] private(transactor:
 
 object GithubPostgresRepository {
 
-  def stream[F[_] : Effect : ContextShift](transactor: Transactor[F]): Stream[F, GithubRepository[F]] =
-    Stream.eval(Sync[F].delay(new GithubPostgresRepository[F](transactor)))
+  def stream[F[_] : Effect : ContextShift](dataSource: DataSource[F]): Stream[F, GithubRepository[F]] =
+    new EffectOps(new GithubPostgresRepository[F](dataSource.hikariTransactor).delay).stream
 
   final case class DiscussionPersistence(
       teamId: Long,

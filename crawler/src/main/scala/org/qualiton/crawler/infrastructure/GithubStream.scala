@@ -24,7 +24,7 @@ object GithubStream {
 
     val program: Stream[F, Unit] = for {
       githubClient <- GithubHttp4sClient.stream(gitConfig)
-      repository <- GithubPostgresRepository.stream(dataSource.hikariTransactor)
+      repository <- GithubPostgresRepository.stream(dataSource)
       handler <- GithubDiscussionHandler.stream(eventQueue, githubClient, repository)
       _ <- Stream.awakeEvery[F](gitConfig.refreshInterval)
       result <- handler.synchronizeDiscussions()
