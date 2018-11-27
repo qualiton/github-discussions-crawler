@@ -44,7 +44,7 @@ class GithubPostgresRepository[F[_] : Effect : ContextShift] private(transactor:
 object GithubPostgresRepository {
 
   def stream[F[_] : Effect : ContextShift](dataSource: DataSource[F]): Stream[F, GithubRepository[F]] =
-    new EffectOps(new GithubPostgresRepository[F](dataSource.hikariTransactor).delay).stream
+    new GithubPostgresRepository[F](dataSource.hikariTransactor).delay[F].stream
 
   final case class DiscussionPersistence(
       teamId: Long,

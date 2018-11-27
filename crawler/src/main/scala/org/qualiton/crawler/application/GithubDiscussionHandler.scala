@@ -1,4 +1,5 @@
-package org.qualiton.crawler.application
+package org.qualiton.crawler
+package application
 
 import cats.effect.{ Effect, Sync }
 import cats.instances.option._
@@ -34,6 +35,6 @@ object GithubDiscussionHandler {
       eventQueue: Queue[F, Event],
       githubClient: GithubClient[F],
       githubRepository: GithubRepository[F]): Stream[F, GithubDiscussionHandler[F]] =
-    Stream.eval(Sync[F].delay(new GithubDiscussionHandler(eventQueue, githubClient, githubRepository)))
+    new GithubDiscussionHandler(eventQueue, githubClient, githubRepository).delay[F].stream
 
 }

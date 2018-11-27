@@ -1,11 +1,12 @@
-package org.qualiton.crawler.infrastructure.rest.git
+package org.qualiton.crawler
+package infrastructure.rest.git
 
 import java.time.Instant
 import java.util.Base64
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{ ConcurrentEffect, Effect, Sync }
+import cats.effect.{ ConcurrentEffect, Effect }
 import fs2.Stream
 
 import com.typesafe.scalalogging.LazyLogging
@@ -109,6 +110,6 @@ object GithubHttp4sClient {
   def stream[F[_] : ConcurrentEffect](gitConfig: GitConfig)(implicit ec: ExecutionContext): Stream[F, GithubClient[F]] =
     for {
       client <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream
-      githubClient <- Stream.eval(Sync[F].delay(new GithubHttp4sClient[F](client, gitConfig)))
+      githubClient <- new GithubHttp4sClient[F](client, gitConfig).delay[F].stream
     } yield githubClient
 }
