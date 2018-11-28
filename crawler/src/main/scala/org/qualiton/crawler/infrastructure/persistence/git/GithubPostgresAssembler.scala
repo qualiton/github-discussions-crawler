@@ -1,6 +1,7 @@
 package org.qualiton.crawler.infrastructure.persistence.git
 
-import cats.data.{ Validated, ValidatedNel }
+import cats.data.ValidatedNel
+import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.apply._
 import cats.syntax.either._
@@ -44,7 +45,7 @@ object GithubPostgresAssembler {
       updatedAt = discussion.updatedAt)
   }
 
-  def toDomain(discussionPersistence: DiscussionPersistence): Validated[Throwable, Discussion] = {
+  def toDomain[F[_] : Sync](discussionPersistence: DiscussionPersistence): F[Discussion] = {
     import discussionPersistence._
 
     val teamNameValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](teamName).leftMap(ValidationError(_)).toValidatedNel
@@ -62,7 +63,11 @@ object GithubPostgresAssembler {
         .mapN((teamName, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments) =>
           Discussion(teamId, teamName, discussionId, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments, createdAt, updatedAt))
 
-    discussionValidated.leftMap(n => ValidationError("Cannot assemble discussion!", n.toList))
+    discussionValidated
+      .toEither match {
+      case Right(a) => Sync[F].pure(a)
+      case Left(e) => Sync[F].raiseError(ValidationError("Cannot assemble discussion!", e.toList))
+    }
   }
 
   private def toComment(commentPersistence: CommentPersistence): ValidatedNel[ValidationError, Comment] = {

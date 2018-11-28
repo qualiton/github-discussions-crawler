@@ -1,8 +1,9 @@
-package org.qualiton.crawler.infrastructure.rest.slack
+package org.qualiton.crawler
+package infrastructure.rest.slack
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{ ConcurrentEffect, Effect, Sync }
+import cats.effect.{ ConcurrentEffect, Effect }
 import fs2.Stream
 
 import com.typesafe.scalalogging.LazyLogging
@@ -47,7 +48,7 @@ object SlackHttp4sClient {
   def stream[F[_] : ConcurrentEffect](slackConfig: SlackConfig)(implicit ec: ExecutionContext): Stream[F, SlackClient[F]] =
     for {
       client <- BlazeClientBuilder[F](ec).withRequestTimeout(slackConfig.requestTimeout).stream
-      slackClient <- Stream.eval(Sync[F].delay(new SlackHttp4sClient[F](client, slackConfig)))
+      slackClient <- new SlackHttp4sClient[F](client, slackConfig).delay[F].stream
     } yield slackClient
 
   type ColorCode = String Refined (MatchesRegex[W.`"#[0-9](6)"`.T])

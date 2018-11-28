@@ -1,6 +1,7 @@
 package org.qualiton.crawler.infrastructure.rest.git
 
-import cats.data.{ Validated, ValidatedNel }
+import cats.data.ValidatedNel
+import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.apply._
 import cats.syntax.either._
@@ -18,10 +19,10 @@ import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sClient.{ TeamDis
 //TODO remove static
 object DiscussionRestAssembler {
 
-  def toDomain(
+  def toDomain[F[_] : Sync](
       userTeamResponse: UserTeamResponse,
       teamDiscussionResponse: TeamDiscussionResponse,
-      teamDiscussionCommentsResponse: TeamDiscussionCommentsResponse): Validated[Throwable, Discussion] = {
+      teamDiscussionCommentsResponse: TeamDiscussionCommentsResponse): F[Discussion] = {
 
     val teamNameValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](userTeamResponse.name).leftMap(ValidationError(_)).toValidatedNel
     val titleValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](teamDiscussionResponse.title).leftMap(ValidationError(_)).toValidatedNel
@@ -40,7 +41,11 @@ object DiscussionRestAssembler {
           Discussion(userTeamResponse.id, teamName, teamDiscussionResponse.number, title, author, avatarUrl, body, bodyVersion, discussionUrl, comments, teamDiscussionResponse.created_at, discussionUpdateAt)
         }
 
-    discussionValidated.leftMap(n => ValidationError("Cannot assemble discussion!", n.toList))
+    discussionValidated
+      .toEither match {
+      case Right(a) => Sync[F].pure(a)
+      case Left(e) => Sync[F].raiseError(ValidationError("Cannot assemble discussion!", e.toList))
+    }
   }
 
   private def toComment(teamDiscussionCommentResponse: TeamDiscussionComment): ValidatedNel[ValidationError, Comment] = {

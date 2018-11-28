@@ -21,7 +21,7 @@ object EventGenerator {
           discussionUrl = currentDiscussion.discussionUrl,
           teamName = currentDiscussion.teamName,
           totalCommentsCount = currentDiscussion.comments.size,
-          targeted = currentDiscussion.targeted.map(refineV[TargetedSpec](_).toOption).flatten,
+          targeted = currentDiscussion.targeted.flatMap(refineV[TargetedSpec](_).toOption),
           createdAt = currentDiscussion.updatedAt)
       }
 
@@ -34,7 +34,7 @@ object EventGenerator {
               author = c.author,
               avatarUrl = c.avatarUrl,
               commentUrl = c.commentUrl,
-              targeted = c.targeted.map(refineV[TargetedSpec](_).toOption).flatten,
+              targeted = c.targeted.flatMap(refineV[TargetedSpec](_).toOption),
               updatedAt = c.updatedAt))
 
           NewCommentsDiscoveredEvent(

@@ -22,7 +22,7 @@ object GithubStream {
       loggerErrorHandler: Throwable => F[Unit])
     (implicit ec: ExecutionContext): Stream[F, Unit] = {
 
-    val program: Stream[F, Either[Throwable, Unit]] = for {
+    val program: Stream[F, Unit] = for {
       githubClient <- GithubHttp4sClient.stream(gitConfig)
       repository <- GithubPostgresRepository.stream(dataSource)
       handler <- GithubDiscussionHandler.stream(eventQueue, githubClient, repository)
@@ -30,7 +30,7 @@ object GithubStream {
       result <- handler.synchronizeDiscussions()
     } yield result
 
-    program.flatMap {
+    program.attempt.flatMap {
       case Left(e) => Stream.eval_(loggerErrorHandler(e))
       case Right(value) => Stream.emit(value)
     }
