@@ -46,5 +46,4 @@ package core {
       commentUrl: Url,
       targeted: Set[Targeted],
       updatedAt: Instant)
-
 }

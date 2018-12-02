@@ -24,11 +24,11 @@ import org.http4s.headers.{ Accept, Authorization }
 
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
-import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
-class GithubHttp4sClient[F[_] : Effect] private(
+class GithubHttp4sApiClient[F[_] : Effect] private(
     client: Client[F],
-    gitConfig: GitConfig) extends GithubClient[F] with Http4sClientDsl[F] with LazyLogging {
+    gitConfig: GitConfig) extends GithubApiClient[F] with Http4sClientDsl[F] with LazyLogging {
 
   import gitConfig._
 
@@ -78,7 +78,7 @@ class GithubHttp4sClient[F[_] : Effect] private(
   }
 }
 
-object GithubHttp4sClient {
+object GithubHttp4sApiClient {
 
   final case class UserTeamResponse(
       id: Long,
@@ -107,9 +107,9 @@ object GithubHttp4sClient {
       created_at: Instant,
       updated_at: Instant)
 
-  def stream[F[_] : ConcurrentEffect](gitConfig: GitConfig)(implicit ec: ExecutionContext): Stream[F, GithubClient[F]] =
+  def stream[F[_] : ConcurrentEffect](gitConfig: GitConfig)(implicit ec: ExecutionContext): Stream[F, GithubApiClient[F]] =
     for {
       client <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream
-      githubClient <- new GithubHttp4sClient[F](client, gitConfig).delay[F].stream
+      githubClient <- new GithubHttp4sApiClient[F](client, gitConfig).delay[F].stream
     } yield githubClient
 }

@@ -41,6 +41,8 @@ spec:
             secretKeyRef:
               name: slack
               key: api-token
+        - name: SLACK_DEFAULT_PUBLISH_CHANNEL
+          value: "{{ .Values.slack.default_publish_channel }}"
         - name: DATABASE_JDBC_URL
           valueFrom:
             secretKeyRef:

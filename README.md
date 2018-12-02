@@ -23,7 +23,7 @@ Both of the events are extracting targeted users and teams by scanning the messa
 - Kubernetes cluster with helm/tiller installed
 - Postgres SQL database to store Github discussion details
 - [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from
-- Slack Incoming Webhooks configured for your preferred slack channel.
+- [Slack Bot User](https://api.slack.com/bot-users) for Github Discussions Crawler
 
 ## Installing the Chart
 
@@ -41,6 +41,7 @@ Install from remote URL with the release name `github-discussions-crawler` into 
 helm upgrade github-discussions-crawler qualiton/github-discussions-crawler \
 	--set github.api_token=GITHUB_API_TOKEN \
 	--set slack.api_token=SLACK_API_TOKEN \
+	--set slack.default_publish_channel=SLACK_CHANNEL \
 	--set database.jdbc_url=DATABASE_JDBC_URL \
 	--set database.username=DATABASE_USERNAME \
 	--set database.password=DATABASE_PASSWORD \
@@ -62,6 +63,7 @@ github:
   api_token: GITHUB_API_TOKEN
 slack:
   api_token: SLACK_API_TOKEN
+  default_publish_channel: SLACK_CHANNEL
 database:
   jdbc_url: JDBC_URL
   username: USERNAME
@@ -92,6 +94,7 @@ Assuming that you already set the following:
 helm upgrade github-discussions-crawler qualiton/github-discussions-crawler \
 	--set github.api_token=GITHUB_API_TOKEN \
 	--set slack.api_token=SLACK_API_TOKEN \
+	--set slack.default_publish_channel=git-discussions \
 	--set database.jdbc_url=jdbc:postgresql://pg-sqlproxy-gcloud-sqlproxy.github-discussions-crawler:5432/gd-crawler-db \
 	--set database.username=gd-crawler-user \
 	--set database.password=DATABASE_PASSWORD \

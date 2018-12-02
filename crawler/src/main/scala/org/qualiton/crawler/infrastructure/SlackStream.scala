@@ -11,7 +11,7 @@ import fs2.concurrent.Queue
 
 import org.qualiton.crawler.common.config.SlackConfig
 import org.qualiton.crawler.domain.core.Event
-import org.qualiton.crawler.infrastructure.rest.slack.SlackHttp4sClient
+import org.qualiton.crawler.infrastructure.rest.slack.SlackEventPublisher
 
 object SlackStream {
 
@@ -23,11 +23,11 @@ object SlackStream {
       Instant.now().minus(slackConfig.ignoreEarlierThan.toHours, ChronoUnit.HOURS) isBefore event.createdAt
 
     for {
-      slackClient <- SlackHttp4sClient.stream(slackConfig)
+      slackClient <- SlackEventPublisher.stream(slackConfig)
       event <- eventQueue.dequeue
       _ <-
         if (slackConfig.enableNotificationPublish && isEventRecent(event)) {
-          Stream.eval(slackClient.sendDiscussionEvent(event))
+          Stream.eval(slackClient.publishDiscussionEvent(event))
         } else {
           Stream.empty
         }

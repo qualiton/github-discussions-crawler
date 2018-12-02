@@ -1,7 +1,7 @@
 lazy val root =
   (project in file("."))
-    .aggregate(server, crawler, database, common)
-    .dependsOn(server, crawler, database, common)
+    .aggregate(server, crawler, slackapiclient, database, common)
+    .dependsOn(server, crawler, slackapiclient, database, common)
     .settings(BaseSettings.default)
     .withDependencies
     .withDocker
@@ -13,9 +13,14 @@ lazy val common =
     .withTestConfig
     .withDependencies
 
+lazy val slackapiclient =
+  (project in file("slackapiclient"))
+    .withTestConfig
+    .withDependencies
+
 lazy val crawler =
   (project in file("crawler"))
-    .dependsOn(database % "test->test;compile->compile", common)
+    .dependsOn(database % "test->test;compile->compile", common, slackapiclient)
     .withTestConfig
     .withDependencies
 

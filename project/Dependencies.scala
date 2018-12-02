@@ -40,6 +40,7 @@ object Dependencies extends AutoPlugin {
       "java8",
       "generic-extras",
       "refined",
+      "optics",
       "fs2")
       .map(module => "io.circe" %% s"circe-$module" % CirceVersion)
 
@@ -49,7 +50,8 @@ object Dependencies extends AutoPlugin {
       "circe",
       "dsl",
       "blaze-client")
-      .map(module => "org.http4s" %% s"http4s-$module" % Http4sVersion)
+      .map(module => "org.http4s" %% s"http4s-$module" % Http4sVersion) ++ Seq(
+      "org.http4s" %% "http4s-websocket" % "0.2.1")
 
   private val logging =
     Seq(
@@ -88,6 +90,7 @@ object Dependencies extends AutoPlugin {
     Seq(
       "eu.timepit" %% "refined" % RefinedVersion,
       "eu.timepit" %% "refined-cats" % RefinedVersion,
+      "com.github.slack-scala-client" %% "slack-scala-client" % "0.2.4",
       "org.scalactic" %% "scalactic" % "3.0.5")
 
   private val test =
