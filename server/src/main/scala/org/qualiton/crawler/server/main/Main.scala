@@ -11,6 +11,7 @@ import fs2.Stream
 
 import com.typesafe.scalalogging.LazyLogging
 import eu.timepit.refined.auto._
+import eu.timepit.refined.types.string.NonEmptyString
 import org.http4s.client.blaze.BlazeClientBuilder
 
 import org.qualiton.crawler.common.concurrent.CachedExecutionContext
@@ -89,8 +90,6 @@ object Main3 extends IOApp with LazyLogging {
 
     import cats.effect.ExitCode
     import fs2.Stream
-
-    import eu.timepit.refined.auto._
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
     val program: Stream[IO, Option[Instant]] = for {
@@ -137,5 +136,5 @@ object Main4 extends IOApp with LazyLogging {
 }
 
 object Token {
-  val token = "..."
+  val token: NonEmptyString = "..."
 }
