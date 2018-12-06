@@ -19,7 +19,7 @@ package object core {
 
 package core {
 
-  sealed trait Event {
+  sealed trait DiscussionEvent {
     def createdAt: Instant
   }
 
@@ -31,14 +31,14 @@ package core {
       discussionUrl: Url,
       totalCommentsCount: Int,
       targeted: Set[Targeted],
-      override val createdAt: Instant) extends Event
+      override val createdAt: Instant) extends DiscussionEvent
 
   final case class NewCommentsDiscoveredEvent(
       teamName: NonEmptyString,
       title: NonEmptyString,
       totalCommentsCount: Int,
       newComments: NonEmptyList[NewComment],
-      override val createdAt: Instant) extends Event
+      override val createdAt: Instant) extends DiscussionEvent
 
   final case class NewComment(
       author: NonEmptyString,

@@ -10,7 +10,7 @@ import org.qualiton.crawler.domain.core._
 
 object EventGenerator {
 
-  def generateEvent[F[_] : Sync](maybePrevious: Option[Discussion], current: Discussion): F[Option[Event]] =
+  def generateEvent[F[_] : Sync](maybePrevious: Option[Discussion], current: Discussion): F[Option[DiscussionEvent]] =
     Sync[F].delay {
 
       def generateNewDiscussionDiscoveredEvent(currentDiscussion: Discussion): NewDiscussionDiscoveredEvent = {
@@ -25,7 +25,7 @@ object EventGenerator {
           createdAt = currentDiscussion.updatedAt)
       }
 
-      maybePrevious.fold[Option[Event]](generateNewDiscussionDiscoveredEvent(current).some) { previous =>
+      maybePrevious.fold[Option[DiscussionEvent]](generateNewDiscussionDiscoveredEvent(current).some) { previous =>
         if (current.comments.size > previous.comments.size) {
 
           import current._
@@ -45,7 +45,7 @@ object EventGenerator {
             createdAt = newCurrentComments.map(_.updatedAt).max).some
 
         } else {
-          none[Event]
+          none[DiscussionEvent]
         }
       }
     }

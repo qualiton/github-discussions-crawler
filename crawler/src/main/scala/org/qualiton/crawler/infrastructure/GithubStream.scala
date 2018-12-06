@@ -9,14 +9,14 @@ import fs2.concurrent.Queue
 import org.qualiton.crawler.application.GithubDiscussionHandler
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.common.datasource.DataSource
-import org.qualiton.crawler.domain.core.Event
+import org.qualiton.crawler.domain.core.DiscussionEvent
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository
 import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient
 
 object GithubStream {
 
   def apply[F[_] : ConcurrentEffect : ContextShift : Timer](
-      eventQueue: Queue[F, Event],
+      eventQueue: Queue[F, DiscussionEvent],
       dataSource: DataSource[F],
       gitConfig: GitConfig,
       loggerErrorHandler: Throwable => F[Unit])

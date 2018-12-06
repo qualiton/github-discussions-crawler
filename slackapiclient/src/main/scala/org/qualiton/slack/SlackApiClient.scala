@@ -10,7 +10,7 @@ import eu.timepit.refined.string.Url
 import io.circe.Json
 
 import org.qualiton.slack.models.{ Channel, ChatMessage, Group, Im, Team, User }
-import org.qualiton.slack.SlackApiClient.RtmStartState
+import org.qualiton.slack.SlackApiClient.{ RtmConnect, RtmStartState }
 
 trait SlackApiClient[F[_]] {
 
@@ -56,6 +56,7 @@ trait SlackApiClient[F[_]] {
 
   def startRealTimeMessageSession: F[RtmStartState]
 
+  def connectRealTimeMessageSession: F[RtmConnect]
 }
 
 object SlackApiClient {
@@ -72,6 +73,9 @@ object SlackApiClient {
       channels: Seq[Channel],
       groups: Seq[Group],
       ims: Seq[Im],
-      bots: Seq[Json]
-  )
+      bots: Seq[Json])
+
+  case class RtmConnect(
+      url: String,
+      self: User)
 }

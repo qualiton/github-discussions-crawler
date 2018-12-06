@@ -10,24 +10,24 @@ import fs2.Stream
 import fs2.concurrent.Queue
 
 import org.qualiton.crawler.common.config.SlackConfig
-import org.qualiton.crawler.domain.core.Event
+import org.qualiton.crawler.domain.core.DiscussionEvent
 import org.qualiton.crawler.infrastructure.rest.slack.SlackEventPublisher
 
 object SlackStream {
 
   def apply[F[_] : ConcurrentEffect](
-      eventQueue: Queue[F, Event],
+      eventPublisherQueue: Queue[F, DiscussionEvent],
       slackConfig: SlackConfig)(implicit ec: ExecutionContext): Stream[F, Unit] = {
 
-    def isEventRecent(event: Event): Boolean =
+    def isEventRecent(event: DiscussionEvent): Boolean =
       Instant.now().minus(slackConfig.ignoreEarlierThan.toHours, ChronoUnit.HOURS) isBefore event.createdAt
 
     for {
-      slackClient <- SlackEventPublisher.stream(slackConfig)
-      event <- eventQueue.dequeue
+      eventPublisher <- SlackEventPublisher.stream(slackConfig)
+      event <- eventPublisherQueue.dequeue
       _ <-
         if (slackConfig.enableNotificationPublish && isEventRecent(event)) {
-          Stream.eval(slackClient.publishDiscussionEvent(event))
+          Stream.eval(eventPublisher.publishDiscussionEvent(event))
         } else {
           Stream.empty
         }

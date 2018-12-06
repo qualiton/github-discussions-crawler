@@ -27,7 +27,7 @@ import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.headers.{ `Content-Type`, Authorization }
 
 import org.qualiton.slack.models.{ Channel, ChatMessage, User }
-import org.qualiton.slack.SlackApiClient.{ RtmStartState, SlackApiClientError }
+import org.qualiton.slack.SlackApiClient.{ RtmConnect, RtmStartState, SlackApiClientError }
 
 class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: NonEmptyString, slackApiUrl: String Refined Url)
   extends SlackApiClient[F]
@@ -207,6 +207,15 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
     client.expect[RtmStartState](request)
   }
 
+  override def connectRealTimeMessageSession: F[RtmConnect] = {
+    val request = Request[F](
+      method = Method.GET,
+      uri = slackBaseUrl / "rtm.connect",
+      headers = Headers(authorization))
+
+    client.expect[RtmConnect](request)
+  }
+
   /** ***************************/
   /** **  Private Helpers  ****/
   /** ***************************/
@@ -226,10 +235,9 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
 
 object SlackApiHttp4sClient {
 
-  def apply[F[_] : Effect](
+  def stream[F[_] : Effect](
       client: Client[F],
       apiToken: NonEmptyString,
-      slackApiUrl: String Refined Url = SlackApiClient.defaultSlackApiUrl): SlackApiClient[F] =
-    new SlackApiHttp4sClient(client, apiToken, slackApiUrl)
-
+      slackApiUrl: String Refined Url = SlackApiClient.defaultSlackApiUrl): Stream[F, SlackApiClient[F]] =
+    Stream.eval(Effect[F].delay(new SlackApiHttp4sClient(client, apiToken, slackApiUrl)))
 }

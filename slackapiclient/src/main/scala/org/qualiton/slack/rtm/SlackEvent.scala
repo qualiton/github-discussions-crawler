@@ -9,6 +9,14 @@ sealed trait SlackEvent
 case class Hello(
     `type`: String) extends SlackEvent
 
+case class Message(
+    ts: String,
+    channel: String,
+    user: String,
+    text: String,
+    is_starred: Option[Boolean],
+    thread_ts: Option[String]) extends SlackEvent
+
 case class ChannelCreated(
     channel: Channel) extends SlackEvent
 
@@ -36,9 +44,14 @@ case class UserChange(
 case class TeamJoin(
     user: User) extends SlackEvent
 
+case class UserTyping(
+    channel: String,
+    user: String) extends SlackEvent
+
 case class Pong(
     `type`: String,
     reply_to: Long) extends SlackEvent
+
 
 
 

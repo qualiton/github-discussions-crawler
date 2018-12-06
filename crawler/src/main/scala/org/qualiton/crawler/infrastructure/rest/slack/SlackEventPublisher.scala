@@ -15,7 +15,7 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
 
 import org.qualiton.crawler.common.config.SlackConfig
-import org.qualiton.crawler.domain.core.{ Event, EventPublisher }
+import org.qualiton.crawler.domain.core.{ DiscussionEvent, EventPublisher }
 import org.qualiton.crawler.infrastructure.rest.slack.ChatMessageAssembler.fromDomain
 import org.qualiton.crawler.infrastructure.rest.slack.SlackEventPublisher.SlackEventPublisherError
 import org.qualiton.slack.{ SlackApiClient, SlackApiHttp4sClient }
@@ -27,7 +27,7 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
 
   val F = implicitly[Effect[F]]
 
-  override def publishDiscussionEvent(event: Event): F[Unit] = {
+  override def publishDiscussionEvent(event: DiscussionEvent): F[Unit] = {
 
     slackApiClient.findChannelByName(defaultChannelName)
       .flatMap(_.fold[F[Unit]](F.raiseError(SlackEventPublisherError(s"Channel `$defaultChannelName` is not defined in Slack"))) { channelId =>
@@ -44,9 +44,8 @@ object SlackEventPublisher {
   def stream[F[_] : ConcurrentEffect](slackConfig: SlackConfig)(implicit ec: ExecutionContext): Stream[F, EventPublisher[F]] =
     for {
       client <- BlazeClientBuilder[F](ec).withRequestTimeout(slackConfig.requestTimeout).stream
-      slackApiClient <- SlackApiHttp4sClient(client, slackConfig.apiToken.value, slackConfig.baseUrl).delay[F].stream
-      slackEventPublisher <- new SlackEventPublisher[F](slackApiClient, slackConfig.defaultChannelName).delay[F].stream
-    } yield slackEventPublisher
+      slackApiClient <- SlackApiHttp4sClient.stream(client, slackConfig.apiToken.value, slackConfig.baseUrl)
+    } yield new SlackEventPublisher[F](slackApiClient, slackConfig.defaultChannelName)
 
   case class SlackEventPublisherError(message: String) extends Exception(message)
 

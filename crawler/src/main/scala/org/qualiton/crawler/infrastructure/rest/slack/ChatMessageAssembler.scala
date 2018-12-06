@@ -2,13 +2,13 @@ package org.qualiton.crawler.infrastructure.rest.slack
 
 import eu.timepit.refined.auto.autoUnwrap
 
-import org.qualiton.crawler.domain.core.{ Event, NewCommentsDiscoveredEvent, NewDiscussionDiscoveredEvent }
+import org.qualiton.crawler.domain.core.{ DiscussionEvent, NewCommentsDiscoveredEvent, NewDiscussionDiscoveredEvent }
 import org.qualiton.slack.models.{ Attachment, ChatMessage, Field }
 
 //TODO remove static
 object ChatMessageAssembler {
 
-  def fromDomain(event: Event): ChatMessage = event match {
+  def fromDomain(event: DiscussionEvent): ChatMessage = event match {
     case NewDiscussionDiscoveredEvent(teamName, title, author, avatarUrl, discussionUrl, totalCommentsCount, targeted, createdAt) =>
 
       ChatMessage(

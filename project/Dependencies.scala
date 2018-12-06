@@ -5,6 +5,7 @@ object Dependencies extends AutoPlugin {
 
   private val CatsVersion = "1.4.0"
   private val CatsEffectVersion = "1.0.0"
+  private val Fs2Version = "1.0.0"
   private val CatsMtl = "0.4.0"
   private val CirisVersion = "0.11.0"
   private val DockerTestkitVersion = "0.9.6"
@@ -31,6 +32,15 @@ object Dependencies extends AutoPlugin {
     Seq(
       "com.google.guava" % "guava" % "25.0-jre")
 
+  private val fs2 =
+    Seq(
+      "co.fs2" %% "fs2-core" % Fs2Version,
+      "com.spinoco" %% "fs2-http" % "0.4.0")
+
+  private val scodec =
+    Seq(
+      "org.scodec" %% "scodec-core" % "1.10.3")
+  
   private val circe =
     Seq(
       "core",
@@ -113,6 +123,8 @@ object Dependencies extends AutoPlugin {
     Seq(
       libraryDependencies ++=
       cats ++
+      fs2 ++
+      scodec ++
       ciris ++
       circe ++
       monocle ++
