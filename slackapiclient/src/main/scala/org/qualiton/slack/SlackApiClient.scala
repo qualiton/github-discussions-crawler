@@ -34,8 +34,6 @@ trait SlackApiClient[F[_]] {
 
   def listUsers: Stream[F, User]
 
-  def setUserPresence(state: String): F[Unit]
-
   /** **********************/
   /** **  IM Endpoints  ****/
   /** **********************/
@@ -61,7 +59,7 @@ trait SlackApiClient[F[_]] {
 
 object SlackApiClient {
 
-  val defaultSlackApiUrl: String Refined Url = "https://slack.com/api/"
+  val defaultSlackApiUrl: String Refined Url = "https://slack.com/"
 
   case class SlackApiClientError(message: String) extends Exception(message)
 

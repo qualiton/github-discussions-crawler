@@ -29,6 +29,7 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
 
   override def publishDiscussionEvent(event: DiscussionEvent): F[Unit] = {
 
+    //TODO add targets
     slackApiClient.findChannelByName(defaultChannelName)
       .flatMap(_.fold[F[Unit]](F.raiseError(SlackEventPublisherError(s"Channel `$defaultChannelName` is not defined in Slack"))) { channelId =>
         for {

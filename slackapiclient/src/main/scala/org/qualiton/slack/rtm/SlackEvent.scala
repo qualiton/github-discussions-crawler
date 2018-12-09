@@ -7,7 +7,7 @@ import org.qualiton.slack.models.{ Channel, Im, User }
 sealed trait SlackEvent
 
 case class Hello(
-    `type`: String) extends SlackEvent
+    `type`: String = "hello") extends SlackEvent
 
 case class Message(
     ts: String,
@@ -49,8 +49,8 @@ case class UserTyping(
     user: String) extends SlackEvent
 
 case class Pong(
-    `type`: String,
-    reply_to: Long) extends SlackEvent
+    reply_to: Long,
+    `type`: String = "pong") extends SlackEvent
 
 
 

@@ -10,15 +10,15 @@ trait GithubApiV3MockServerSupport
     with ResourceSupport {
   this: Suite =>
 
-  val mockGithubApiV3MockServer = new GithubApiV3MockServer()
+  val githubApiV3MockServer = new GithubApiV3MockServer()
 
   override def beforeAll(): Unit = {
-    mockGithubApiV3MockServer.startMockServer()
+    githubApiV3MockServer.startMockServer()
     super.beforeAll()
   }
 
   override def afterAll: Unit = {
-    mockGithubApiV3MockServer.stopMockServer()
+    githubApiV3MockServer.stopMockServer()
     super.afterAll()
   }
 }

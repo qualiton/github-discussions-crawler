@@ -1,10 +1,11 @@
 package org.qualiton.slack.models
 
 case class ChatMessage(
-    text: String,
+    text: Option[String],
     attachments: List[Attachment] = List.empty)
 
 final case class Attachment(
+    pretext: String,
     color: String,
     author_name: String,
     author_icon: String,

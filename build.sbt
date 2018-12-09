@@ -18,9 +18,10 @@ lazy val slackapiclient =
     .withTestConfig
     .withDependencies
 
+//TODO review module dependencies
 lazy val crawler =
   (project in file("crawler"))
-    .dependsOn(database % "test->test;compile->compile", common, slackapiclient)
+    .dependsOn(database % "test->test;compile->compile", common % "test->test;compile->compile", slackapiclient % "test->test;compile->compile")
     .withTestConfig
     .withDependencies
 

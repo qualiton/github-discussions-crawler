@@ -13,11 +13,18 @@ import eu.timepit.refined.auto.autoUnwrap
 import org.qualiton.crawler.common.config.DatabaseConfig
 
 object DataSource {
+
+  def apply[F[_] : Effect : ContextShift](
+      databaseConfig: DatabaseConfig,
+      connectEC: ExecutionContext,
+      transactEC: ExecutionContext): DataSource[F] =
+    new DataSource[F](databaseConfig, connectEC, transactEC)
+
   def stream[F[_] : Effect : ContextShift](
       databaseConfig: DatabaseConfig,
       connectEC: ExecutionContext,
       transactEC: ExecutionContext): Stream[F, DataSource[F]] =
-    Stream.bracket(new DataSource[F](databaseConfig, connectEC, transactEC).delay)(_.close)
+    Stream.bracket(DataSource[F](databaseConfig, connectEC, transactEC).delay)(_.close)
 }
 
 final class DataSource[F[_] : Effect : ContextShift] private(

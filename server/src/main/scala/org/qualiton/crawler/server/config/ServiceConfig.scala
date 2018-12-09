@@ -9,6 +9,7 @@ import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConf
 final case class ServiceConfig(
     httpPort: UserPortNumber,
     gitConfig: GitConfig,
+    //TODO refactor to publisher config
     slackConfig: SlackConfig,
     databaseConfig: DatabaseConfig)
 

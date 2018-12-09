@@ -12,7 +12,9 @@ object ChatMessageAssembler {
     case NewDiscussionDiscoveredEvent(teamName, title, author, avatarUrl, discussionUrl, totalCommentsCount, targeted, createdAt) =>
 
       ChatMessage(
-        "New discussion has been discovered", List(Attachment(
+        None,
+        List(Attachment(
+          pretext = "New discussion has been discovered",
           color = "good",
           author_name = author,
           author_icon = avatarUrl,
@@ -30,7 +32,9 @@ object ChatMessageAssembler {
       val text = if (newComments.size == 1) "New comment has been discovered" else s"${ newComments.size } new comments have been discovered"
 
       ChatMessage(
-        text, List(Attachment(
+        None,
+        List(Attachment(
+          pretext = text,
           color = "good",
           author_name = newComments.map(_.author.value).toList.toSet.mkString(", "),
           author_icon = newComments.last.avatarUrl,

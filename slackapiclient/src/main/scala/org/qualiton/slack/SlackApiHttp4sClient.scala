@@ -36,7 +36,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
   val F = implicitly[Effect[F]]
 
   private val authorization: Authorization = Authorization(Credentials.Token(AuthScheme.Bearer, apiToken.value))
-  private val slackBaseUrl: Uri = Uri.unsafeFromString(slackApiUrl)
+  private val slackBaseUrl: Uri = Uri.unsafeFromString(slackApiUrl) / "api"
 
   /** *************************/
   /** *  Channel Endpoints  ***/
@@ -52,7 +52,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
       .flatMap(json =>
         root.error.string.getOption(json) match {
           case Some(error) if (error == "channel_not_found") => none[Channel].pure[F]
-          case Some(error) => F.raiseError(new SlackApiClientError(error))
+          case Some(error) => F.raiseError(SlackApiClientError(error))
           case None => root.channel.as[Channel].getOption(json).pure[F]
         })
   }
@@ -74,7 +74,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
       client.expect[Json](request)
         .flatMap(json =>
           root.error.string.getOption(json) match {
-            case Some(error) => F.raiseError(new SlackApiClientError(error))
+            case Some(error) => F.raiseError(SlackApiClientError(error))
             case None => json.pure[F]
           })
     }
@@ -96,7 +96,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
       .flatMap(json =>
         root.error.string.getOption(json) match {
           case Some(error) if (error == "user_not_found") => none[User].pure[F]
-          case Some(error) => F.raiseError(new SlackApiClientError(error))
+          case Some(error) => F.raiseError(SlackApiClientError(error))
           case None => root.user.as[User].getOption(json).pure[F]
         })
   }
@@ -116,26 +116,12 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
       client.expect[Json](request)
         .flatMap(json =>
           root.error.string.getOption(json) match {
-            case Some(error) => F.raiseError(new SlackApiClientError(error))
+            case Some(error) => F.raiseError(SlackApiClientError(error))
             case None => json.pure[F]
           })
     }
 
     Stream.eval(listUsersRequest()).flatMap(paginationApiHelper(_, listUsersRequest, root.members.each.as[User]))
-  }
-
-  override def setUserPresence(state: String): F[Unit] = {
-    val request = Request[F](
-      method = Method.POST,
-      uri = slackBaseUrl / "users.setPresence" +? ("presence", state),
-      headers = Headers(authorization))
-
-    client.expect[Json](request)
-      .flatMap[Json](json =>
-      root.error.string.getOption(json) match {
-        case Some(error) => F.raiseError(new SlackApiClientError(error))
-        case None => json.pure[F]
-      }).void
   }
 
   /** **********************/
@@ -152,7 +138,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
       .flatMap(json =>
         root.error.string.getOption(json) match {
           case Some(error) if (error == "user_not_found") => none[String].pure[F]
-          case Some(error) => F.raiseError(new SlackApiClientError(error))
+          case Some(error) => F.raiseError(SlackApiClientError(error))
           case None => root.channel.id.string.getOption(json).pure[F]
         })
   }
@@ -166,7 +152,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
     client.expect[Json](request)
       .flatMap[Json](json =>
       root.error.string.getOption(json) match {
-        case Some(error) => F.raiseError(new SlackApiClientError(error))
+        case Some(error) => F.raiseError(SlackApiClientError(error))
         case None => json.pure[F]
       }).void
   }
@@ -186,7 +172,7 @@ class SlackApiHttp4sClient[F[_] : Effect] private(client: Client[F], apiToken: N
     client.expect[Json](request)
       .flatMap(json =>
         root.error.string.getOption(json) match {
-          case Some(error) => F.raiseError(new SlackApiClientError(error))
+          case Some(error) => F.raiseError(SlackApiClientError(error))
           case None =>
             root.ts.as[String].getOption(json)
               .map(i => Instant.ofEpochSecond(i.toDouble.toLong)).get.pure[F]
@@ -240,4 +226,5 @@ object SlackApiHttp4sClient {
       apiToken: NonEmptyString,
       slackApiUrl: String Refined Url = SlackApiClient.defaultSlackApiUrl): Stream[F, SlackApiClient[F]] =
     Stream.eval(Effect[F].delay(new SlackApiHttp4sClient(client, apiToken, slackApiUrl)))
+
 }
