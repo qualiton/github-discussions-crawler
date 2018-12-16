@@ -16,7 +16,8 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 <a href="url"><img src="docs/new_comments.png" aligh="left" width="500" ></a>
 
-Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z]+` or `#[a-z_\\-]+`
+Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\\-]+` or `#[0-9a-zA-Z_\\-]+`.
+Targeted teams are notified directly via the team channel if the bot is added as user.
 
 ## Prerequisites
 
