@@ -36,7 +36,7 @@ import org.qualiton.crawler.server.main.Server
 import org.qualiton.crawler.testsupport.dockerkit.PostgresDockerTestKit
 import org.qualiton.crawler.testsupport.scalatest.GithubApiV3MockServerSupport
 import org.qualiton.crawler.testsupport.wiremock.GithubApiV3MockServer
-import org.qualiton.slack.testsupport.scalatest.SlackApiMockServerSupport
+import org.qualiton.slack.testsupport.scalatest.{ SlackApiMockServerSupport, SlackRtmApiMockServerSupport }
 import org.qualiton.slack.testsupport.wiremock.SlackApiMockServer
 
 class CrawlerEndToEndSpec
@@ -53,6 +53,7 @@ class CrawlerEndToEndSpec
     with BeforeAndAfterEach
     with GithubApiV3MockServerSupport
     with SlackApiMockServerSupport
+    with SlackRtmApiMockServerSupport
     with PostgresDockerTestKit
     with Inside
     with LazyLogging {
@@ -95,6 +96,7 @@ class CrawlerEndToEndSpec
       slackConfig = SlackConfig(
         baseUrl = refineV[Url](s"http://localhost:${ SlackApiMockServer.SlackApiPort }").getOrElse(throw new IllegalArgumentException),
         requestTimeout = 5.seconds,
+        pingInterval = 5.seconds,
         apiToken = config.Secret(SlackApiMockServer.testApiToken),
         defaultChannelName = "default_channel",
         enableNotificationPublish = true,
@@ -121,6 +123,7 @@ class CrawlerEndToEndSpec
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
       slackApiMockServer.mockConversationsList(appConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
 
       Then("new discussion is persisted to db")
@@ -175,6 +178,7 @@ class CrawlerEndToEndSpec
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 2, referenceInstant)
       slackApiMockServer.mockConversationsList(appConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
 
       Then("new discussion is persisted to db")
@@ -254,6 +258,7 @@ class CrawlerEndToEndSpec
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
       slackApiMockServer.mockConversationsList(appConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
       val firstUpdatedAt: Instant = eventually {
         val result = findDiscussionBy(teamId1, discussionId1)

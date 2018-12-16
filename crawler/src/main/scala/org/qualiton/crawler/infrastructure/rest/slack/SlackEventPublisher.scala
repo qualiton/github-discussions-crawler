@@ -39,13 +39,12 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
   private implicit val channelCache: Cache[Option[Channel]] = CaffeineCache[Option[Channel]]
 
   override def publishDiscussionEvent(event: DiscussionEvent): F[Unit] = {
-
     findChannelByName(defaultChannelName)
       .flatMap(_.fold[F[Unit]](F.raiseError(SlackEventPublisherError(s"Channel `$defaultChannelName` is not defined in Slack"))) { channel =>
         for {
           message <- fromDomain(event).delay
-          channels <- event.targeted.teams.toList.traverse(t => findChannelByName(t)).map(channel :: _.flatten)
-          _ <- channels.traverse(c => slackApiClient.postChatMessage(c.id, message))
+          channelIds <- event.targeted.teams.toList.traverse(findChannelByName(_)).map(channel.id :: _.flatten.map(_.id.drop(1)))
+          _ <- channelIds.traverse(slackApiClient.postChatMessage(_, message))
         } yield ()
       })
   }

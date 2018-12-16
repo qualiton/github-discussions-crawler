@@ -49,6 +49,7 @@ object DefaultConfigLoader extends ConfigLoader {
         slackConfig = SlackConfig(
           baseUrl = SlackApiClient.defaultSlackApiUrl,
           requestTimeout = 5.seconds,
+          pingInterval = 60.seconds,
           apiToken = config.Secret(slackApiToken),
           defaultChannelName = maybeSlackDefaultPublishChannel.getOrElse("git-discussions"),
           enableNotificationPublish = slackDisablePublish.map(!_).getOrElse(true),

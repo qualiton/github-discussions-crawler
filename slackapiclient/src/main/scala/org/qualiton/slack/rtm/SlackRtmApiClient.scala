@@ -30,8 +30,8 @@ import org.qualiton.slack.{ SlackApiClient, SlackApiHttp4sClient }
 import org.qualiton.slack.rtm.SlackRtmApiClient.{ ClientMessage, Ping }
 import org.qualiton.slack.rtm.slack.models.SlackEvent
 
-class SlackRtmApiClient[F[_] : ConcurrentEffect] private(val slackApiClient: SlackApiClient[F])
-  (implicit CS: ContextShift[F], T: Timer[F], AG: AsynchronousChannelGroup) extends LazyLogging {
+class SlackRtmApiClient[F[_] : ConcurrentEffect : ContextShift : Timer] private(val slackApiClient: SlackApiClient[F], pingInterval: FiniteDuration)
+  (implicit AG: AsynchronousChannelGroup) extends LazyLogging {
 
   val F = implicitly[Effect[F]]
 
@@ -82,8 +82,8 @@ class SlackRtmApiClient[F[_] : ConcurrentEffect] private(val slackApiClient: Sla
     } yield request
   }
 
-  private def wspipe(clientPipe: Pipe[F, SlackEvent, ClientMessage])(implicit T: Timer[F]): Pipe[F, Frame[String], Frame[String]] = { inbound =>
-    val ping: Stream[F, Frame[String]] = Stream.awakeEvery[F](60.second).map(_ => Frame.Text(Ping(idCounter.getAndIncrement()).asJson.toString()))
+  private def wspipe(clientPipe: Pipe[F, SlackEvent, ClientMessage]): Pipe[F, Frame[String], Frame[String]] = { inbound =>
+    val ping: Stream[F, Frame[String]] = Stream.awakeEvery[F](pingInterval).map(_ => Frame.Text(Ping(idCounter.getAndIncrement()).asJson.toString()))
     val outbound = inbound.through(decodeFrame).through(clientPipe).map(m => Frame.Text(m.asJson.toString()))
     Stream(ping, outbound).parJoin(2)
   }
@@ -104,17 +104,21 @@ class SlackRtmApiClient[F[_] : ConcurrentEffect] private(val slackApiClient: Sla
 
 object SlackRtmApiClient extends LazyLogging {
 
-  def stream[F[_] : ConcurrentEffect](slackApiClient: SlackApiClient[F])
-    (implicit CS: ContextShift[F], T: Timer[F], AG: AsynchronousChannelGroup): Stream[F, SlackRtmApiClient[F]] =
-    Stream.eval(Effect[F].delay(new SlackRtmApiClient(slackApiClient)))
+  def stream[F[_] : ConcurrentEffect : Timer : ContextShift](slackApiClient: SlackApiClient[F], pingInterval: FiniteDuration)
+    (implicit AG: AsynchronousChannelGroup): Stream[F, SlackRtmApiClient[F]] =
+    Stream.eval(Effect[F].delay(new SlackRtmApiClient(slackApiClient, pingInterval)))
 
-  def stream[F[_] : ConcurrentEffect](token: NonEmptyString, requestTimeout: Duration = 5.second, slackApiUrl: String Refined Url = SlackApiClient.defaultSlackApiUrl)
-    (implicit CS: ContextShift[F], T: Timer[F], ec: ExecutionContext, es: ExecutorService): Stream[F, SlackRtmApiClient[F]] = {
+  def stream[F[_] : ConcurrentEffect : ContextShift : Timer](
+      token: NonEmptyString,
+      requestTimeout: Duration = 5.second,
+      pingInterval: FiniteDuration = 60.seconds,
+      slackApiUrl: String Refined Url = SlackApiClient.defaultSlackApiUrl)
+    (implicit ec: ExecutionContext, es: ExecutorService): Stream[F, SlackRtmApiClient[F]] = {
     implicit val ACG = AsynchronousChannelGroup.withThreadPool(es)
     for {
       client <- BlazeClientBuilder[F](ec).withRequestTimeout(requestTimeout).stream
       slackApiClient <- SlackApiHttp4sClient.stream(client, token, slackApiUrl)
-      slackRtmClient <- stream(slackApiClient)
+      slackRtmClient <- stream(slackApiClient, pingInterval)
     } yield slackRtmClient
   }
 

@@ -2,6 +2,8 @@ package org.qualiton.slack.rtm
 
 import java.util.concurrent.Executors
 
+import scala.concurrent.duration._
+
 import cats.effect.{ ContextShift, IO, Timer }
 import cats.scalatest.{ EitherMatchers, EitherValues }
 
@@ -50,7 +52,10 @@ class SlackRtmApiClientIntegrationSpec extends FreeSpec
       val pipe: fs2.Pipe[IO, SlackEvent, Unit] = _.evalMap(e => IO(logger.info(s"log: ${ e.toString }")))
 
       val program = for {
-        slackRtmClient <- org.qualiton.slack.rtm.SlackRtmApiClient.stream[IO](token = testApiToken, slackApiUrl = refineV[Url](s"http://$SlackApiHost:$SlackApiPort").getOrElse(throw new IllegalArgumentException))
+        slackRtmClient <- org.qualiton.slack.rtm.SlackRtmApiClient.stream[IO](
+          token = testApiToken,
+          pingInterval = 2.seconds,
+          slackApiUrl = refineV[Url](s"http://$SlackApiHost:$SlackApiPort").getOrElse(throw new IllegalArgumentException))
         event <- slackRtmClient.events
       } yield event
 

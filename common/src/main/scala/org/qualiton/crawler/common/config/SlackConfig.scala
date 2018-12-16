@@ -9,6 +9,7 @@ import eu.timepit.refined.types.string.NonEmptyString
 final case class SlackConfig(
     baseUrl: String Refined Url,
     requestTimeout: Duration,
+    pingInterval: Duration,
     apiToken: Secret[NonEmptyString],
     defaultChannelName: NonEmptyString,
     enableNotificationPublish: Boolean,
