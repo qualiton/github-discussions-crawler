@@ -14,6 +14,8 @@ object Dependencies extends AutoPlugin {
   private val RefinedVersion = "0.9.2"
   private val CirceVersion = "0.10.0"
   private val MonocleVersion = "1.5.1-cats"
+  private val ScalaCacheVersion = "0.27.0"
+
 
   private val cats = Seq(
     "org.typelevel" %% "cats-core" % CatsVersion,
@@ -40,7 +42,7 @@ object Dependencies extends AutoPlugin {
   private val scodec =
     Seq(
       "org.scodec" %% "scodec-core" % "1.10.3")
-  
+
   private val circe =
     Seq(
       "core",
@@ -96,6 +98,11 @@ object Dependencies extends AutoPlugin {
       "com.beachape" %% "enumeratum-circe" % "1.5.17",
       "com.beachape" %% "enumeratum-macros" % "1.5.9")
 
+  private val scalaCache = Seq(
+    "com.github.cb372" %% "scalacache-caffeine",
+    "com.github.cb372" %% "scalacache-cats-effect")
+    .map(_ % ScalaCacheVersion)
+
   private val others =
     Seq(
       "eu.timepit" %% "refined" % RefinedVersion,
@@ -127,6 +134,7 @@ object Dependencies extends AutoPlugin {
       scodec ++
       ciris ++
       circe ++
+      scalaCache ++
       monocle ++
       enumeratum ++
       database ++

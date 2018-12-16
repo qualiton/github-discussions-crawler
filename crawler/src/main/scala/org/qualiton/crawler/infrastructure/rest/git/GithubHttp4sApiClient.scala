@@ -6,7 +6,7 @@ import java.util.Base64
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{ ConcurrentEffect, Effect }
+import cats.effect.{ ConcurrentEffect, Effect, Timer }
 import fs2.Stream
 
 import com.typesafe.scalalogging.LazyLogging
@@ -20,6 +20,7 @@ import org.http4s.MediaType.application.json
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
+import org.http4s.client.middleware.{ Retry, RetryPolicy }
 import org.http4s.headers.{ Accept, Authorization }
 
 import org.qualiton.crawler.common.config.GitConfig
@@ -107,9 +108,12 @@ object GithubHttp4sApiClient {
       created_at: Instant,
       updated_at: Instant)
 
-  def stream[F[_] : ConcurrentEffect](gitConfig: GitConfig)(implicit ec: ExecutionContext): Stream[F, GithubApiClient[F]] =
+  def stream[F[_] : ConcurrentEffect : Timer](client: Client[F], gitConfig: GitConfig): Stream[F, GithubApiClient[F]] =
+    new GithubHttp4sApiClient[F](client, gitConfig).delay[F].stream
+
+  def stream[F[_] : ConcurrentEffect : Timer](gitConfig: GitConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
     for {
-      client <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream
-      githubClient <- new GithubHttp4sApiClient[F](client, gitConfig).delay[F].stream
+      retryClient <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream.map(Retry(retryPolicy)(_))
+      githubClient <- stream(retryClient, gitConfig)
     } yield githubClient
 }

@@ -21,7 +21,10 @@ object EventGenerator {
           discussionUrl = currentDiscussion.discussionUrl,
           teamName = currentDiscussion.teamName,
           totalCommentsCount = currentDiscussion.comments.size,
-          targeted = currentDiscussion.targeted.flatMap(refineV[TargetedSpec](_).toOption),
+          targeted =
+            Targeted(
+              persons = currentDiscussion.targetedPerson.flatMap(refineV[TargetedPersonSpec](_).toOption),
+              teams = currentDiscussion.targetedTeam.flatMap(refineV[TargetedTeamSpec](_).toOption)),
           createdAt = currentDiscussion.updatedAt)
       }
 
@@ -34,7 +37,9 @@ object EventGenerator {
               author = c.author,
               avatarUrl = c.avatarUrl,
               commentUrl = c.commentUrl,
-              targeted = c.targeted.flatMap(refineV[TargetedSpec](_).toOption),
+              Targeted(
+                persons = c.targetedPerson.flatMap(refineV[TargetedPersonSpec](_).toOption),
+                teams = c.targetedTeam.flatMap(refineV[TargetedTeamSpec](_).toOption)),
               updatedAt = c.updatedAt))
 
           NewCommentsDiscoveredEvent(

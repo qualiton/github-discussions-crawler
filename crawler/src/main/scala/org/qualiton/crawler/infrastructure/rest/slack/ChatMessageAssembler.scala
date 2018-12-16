@@ -23,12 +23,12 @@ object ChatMessageAssembler {
           fields =
             List(Field("Team", teamName, true)) :::
             (if (totalCommentsCount > 0) List(Field("Comments", totalCommentsCount.toString, true)) else List.empty) :::
-            (if (targeted.nonEmpty) List(Field("Targeted", targeted.map(_.value).mkString(", "), false)) else List.empty),
+            (if (!targeted.isEmpty) List(Field("Targeted", (targeted.persons.map(_.value).toList ::: targeted.teams.map(_.value).toList).mkString(", "), false)) else List.empty),
           ts = createdAt.getEpochSecond)))
 
-    case NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, newComments, createdAt) =>
+    case n@NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, newComments, createdAt) =>
 
-      val targeted: Set[String] = newComments.foldLeft(Set.empty[String])(_ ++ _.targeted.map(_.value))
+      val targeted: List[String] = n.targeted.persons.map(_.value).toList ::: n.targeted.teams.map(_.value).toList
       val text = if (newComments.size == 1) "New comment has been discovered" else s"${ newComments.size } new comments have been discovered"
 
       ChatMessage(

@@ -2,12 +2,14 @@ package org.qualiton.crawler
 package server.main
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 import cats.effect.{ ConcurrentEffect, ContextShift, ExitCode, Timer }
 import fs2.Stream
 import fs2.concurrent.Queue
 
 import com.typesafe.scalalogging.LazyLogging
+import org.http4s.client.middleware.RetryPolicy
 
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.core.DiscussionEvent
@@ -20,6 +22,8 @@ object Server extends LazyLogging {
   def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig])(implicit ec: ExecutionContext): Stream[F, ExitCode] = {
 
     val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => logger.error(t.getMessage, t).delay
+
+    implicit val retryPolicy = RetryPolicy[F](RetryPolicy.exponentialBackoff(2.minutes, 10), RetryPolicy.defaultRetriable)
 
     for {
       config <- Stream.eval(loadConfig)

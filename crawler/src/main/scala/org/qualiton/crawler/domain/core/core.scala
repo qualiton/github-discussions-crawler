@@ -11,8 +11,11 @@ import shapeless.{ Witness => W }
 
 package object core {
 
-  type TargetedSpec = MatchesRegex[W.`"@[0-9a-zA-Z\\\\-_]+|#[0-9a-zA-Z-_]+"`.T]
-  type Targeted = String Refined TargetedSpec
+  type TargetedPersonSpec = MatchesRegex[W.`"@[0-9a-zA-Z\\\\-_]+"`.T]
+  type TargetedPerson = String Refined TargetedPersonSpec
+
+  type TargetedTeamSpec = MatchesRegex[W.`"#[0-9a-zA-Z\\\\-_]+"`.T]
+  type TargetedTeam = String Refined TargetedTeamSpec
 
   type Url = String Refined RefinedUrl
 }
@@ -21,6 +24,8 @@ package core {
 
   sealed trait DiscussionEvent {
     def createdAt: Instant
+
+    def targeted: Targeted
   }
 
   final case class NewDiscussionDiscoveredEvent(
@@ -30,7 +35,7 @@ package core {
       avatarUrl: Url,
       discussionUrl: Url,
       totalCommentsCount: Int,
-      targeted: Set[Targeted],
+      targeted: Targeted,
       override val createdAt: Instant) extends DiscussionEvent
 
   final case class NewCommentsDiscoveredEvent(
@@ -38,12 +43,26 @@ package core {
       title: NonEmptyString,
       totalCommentsCount: Int,
       newComments: NonEmptyList[NewComment],
-      override val createdAt: Instant) extends DiscussionEvent
+      override val createdAt: Instant) extends DiscussionEvent {
+
+    val targeted: Targeted =
+      Targeted(
+        persons = newComments.foldLeft(Set.empty[TargetedPerson])(_ ++ _.targeted.persons),
+        teams = newComments.foldLeft(Set.empty[TargetedTeam])(_ ++ _.targeted.teams))
+  }
 
   final case class NewComment(
       author: NonEmptyString,
       avatarUrl: Url,
       commentUrl: Url,
-      targeted: Set[Targeted],
+      targeted: Targeted,
       updatedAt: Instant)
+
+  final case class Targeted(
+      persons: Set[TargetedPerson],
+      teams: Set[TargetedTeam]) {
+
+    val isEmpty: Boolean = persons.isEmpty && teams.isEmpty
+  }
+
 }
