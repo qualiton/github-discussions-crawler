@@ -28,7 +28,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{ Millis, Seconds, Span }
 
 import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig, SlackConfig }
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ CommentPersistence, CommentsListPersistence, DiscussionPersistence }
 import org.qualiton.crawler.server.config.ServiceConfig
@@ -88,19 +88,23 @@ class CrawlerEndToEndSpec
   val appConfig =
     ServiceConfig(
       httpPort = appHttpPort,
-      gitConfig = GitConfig(
-        baseUrl = refineV[Url](s"http://localhost:${ GithubApiV3MockServer.GithubApiV3Port }").getOrElse(throw new IllegalArgumentException),
-        requestTimeout = 5.seconds,
-        apiToken = config.Secret(refineV[NonEmpty](GithubApiV3MockServer.testApiToken).getOrElse(throw new IllegalArgumentException)),
-        refreshInterval = 1.second),
-      slackConfig = SlackConfig(
-        baseUrl = refineV[Url](s"http://localhost:${ SlackApiMockServer.SlackApiPort }").getOrElse(throw new IllegalArgumentException),
-        requestTimeout = 5.seconds,
-        pingInterval = 5.seconds,
-        apiToken = config.Secret(SlackApiMockServer.testApiToken),
-        defaultChannelName = "default_channel",
-        enableNotificationPublish = true,
-        ignoreEarlierThan = 6.hours),
+      gitConfig =
+        GitConfig(
+          baseUrl = refineV[Url](s"http://localhost:${ GithubApiV3MockServer.GithubApiV3Port }").getOrElse(throw new IllegalArgumentException),
+          requestTimeout = 5.seconds,
+          apiToken = config.Secret(refineV[NonEmpty](GithubApiV3MockServer.testApiToken).getOrElse(throw new IllegalArgumentException)),
+          refreshInterval = 1.second),
+      publisherConfig =
+        PublisherConfig(
+          slackConfig =
+            SlackConfig(
+              baseUrl = refineV[Url](s"http://localhost:${ SlackApiMockServer.SlackApiPort }").getOrElse(throw new IllegalArgumentException),
+              requestTimeout = 5.seconds,
+              pingInterval = 5.seconds,
+              apiToken = config.Secret(SlackApiMockServer.testApiToken),
+              defaultChannelName = "default_channel"),
+          enableNotificationPublish = true,
+          ignoreEarlierThan = 6.hours),
       databaseConfig =
         DatabaseConfig(
           databaseDriverName = "org.postgresql.Driver",
@@ -122,7 +126,7 @@ class CrawlerEndToEndSpec
       val discussionId1 = 1L
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
-      slackApiMockServer.mockConversationsList(appConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
 
@@ -177,7 +181,7 @@ class CrawlerEndToEndSpec
       val discussionId1 = 1L
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 2, referenceInstant)
-      slackApiMockServer.mockConversationsList(appConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
 
@@ -257,7 +261,7 @@ class CrawlerEndToEndSpec
       val commentId = 1L
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
-      slackApiMockServer.mockConversationsList(appConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
       val firstUpdatedAt: Instant = eventually {

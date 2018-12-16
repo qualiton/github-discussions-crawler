@@ -11,6 +11,4 @@ final case class SlackConfig(
     requestTimeout: Duration,
     pingInterval: Duration,
     apiToken: Secret[NonEmptyString],
-    defaultChannelName: NonEmptyString,
-    enableNotificationPublish: Boolean,
-    ignoreEarlierThan: Duration)
+    defaultChannelName: NonEmptyString)

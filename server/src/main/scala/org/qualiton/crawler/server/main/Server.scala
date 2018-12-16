@@ -16,7 +16,7 @@ import org.http4s.client.middleware.RetryPolicy
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.domain.core.DiscussionEvent
 import org.qualiton.crawler.flyway.FlywayUpdater
-import org.qualiton.crawler.infrastructure.{ GithubStream, HealthcheckHttpServerStream, SlackStream }
+import org.qualiton.crawler.infrastructure.{ GithubStream, HealthcheckHttpServerStream, PublisherStream }
 import org.qualiton.crawler.server.config.ServiceConfig
 
 object Server extends LazyLogging {
@@ -34,9 +34,9 @@ object Server extends LazyLogging {
       _ <- Stream.eval(FlywayUpdater(dataSource))
       discussionEventQueue <- Stream.eval(Queue.bounded[F, DiscussionEvent](100))
       gitStream = GithubStream(discussionEventQueue, dataSource, config.gitConfig, loggerErrorHandler)
-      slackStream = SlackStream(discussionEventQueue, config.slackConfig)
+      publisherStream = PublisherStream(discussionEventQueue, config.publisherConfig)
       httpStream = HealthcheckHttpServerStream(config.httpPort)
-      stream <- Stream(httpStream, gitStream.drain, slackStream.drain)
+      stream <- Stream(httpStream, gitStream.drain, publisherStream.drain)
         .parJoin(3)
         .handleErrorWith(t => Stream.eval_(loggerErrorHandler(t)))
     } yield stream

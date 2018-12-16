@@ -4,13 +4,12 @@ import cats.Show
 
 import eu.timepit.refined.types.net.UserPortNumber
 
-import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig }
 
 final case class ServiceConfig(
     httpPort: UserPortNumber,
     gitConfig: GitConfig,
-    //TODO refactor to publisher config
-    slackConfig: SlackConfig,
+    publisherConfig: PublisherConfig,
     databaseConfig: DatabaseConfig)
 
 object ServiceConfig {
