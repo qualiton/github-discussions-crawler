@@ -106,11 +106,11 @@ jobs:
     - run:
         name: Generate coverage report
         command: |
-          ls -la
-          ls -la project/common/target/scala-2.12/scoverage-data/
-          ls -la project/crawler/target/scala-2.12/scoverage-data/
-          ls -la project/server/target/scala-2.12/scoverage-data/
-          ls -la project/slackapiclient/target/scala-2.12/scoverage-data/
+          ls -laR
+          ls -la common/target/scala-2.12/scoverage-data/
+          ls -la crawler/target/scala-2.12/scoverage-data/
+          ls -la server/target/scala-2.12/scoverage-data/
+          ls -la slackapiclient/target/scala-2.12/scoverage-data/
           sbt coverageReport
 
   build:
