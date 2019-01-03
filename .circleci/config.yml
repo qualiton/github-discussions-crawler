@@ -105,7 +105,12 @@ jobs:
     - *restore_cache
     - run:
         name: Generate coverage report
-        command: sbt coverageReport
+        command: |
+          ls -la project/common/target/scala-2.12/scoverage-data/
+          ls -la project/crawler/target/scala-2.12/scoverage-data/
+          ls -la project/server/target/scala-2.12/scoverage-data/
+          ls -la project/slackapiclient/target/scala-2.12/scoverage-data/
+          sbt coverageReport
 
   build:
     <<: *default_image
