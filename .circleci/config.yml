@@ -106,6 +106,7 @@ jobs:
     - run:
         name: Generate coverage report
         command: |
+          ls -la
           ls -la project/common/target/scala-2.12/scoverage-data/
           ls -la project/crawler/target/scala-2.12/scoverage-data/
           ls -la project/server/target/scala-2.12/scoverage-data/
