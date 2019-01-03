@@ -29,9 +29,9 @@ version: 2.1
 
 .persist_coverage_date_to_workspace: &persist_coverage_date_to_workspace
   persist_to_workspace:
-    root: ~/project
+    root: ~/
     paths:
-    - project/github-discussions-crawler/*/target/scala-2.12/scoverage-data/scoverage.measurements.*
+    - project/*/target/scala-2.12/scoverage-data/scoverage.measurements.*
 
 .cache_key: &cache_key
               v1-repo-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-{{ .Branch }}-{{ checksum "project/Dependencies.scala"}}
