@@ -12,11 +12,12 @@ object TestConfig extends AutoPlugin {
   object autoImport {
 
     implicit final class TestProject(val project: Project) extends AnyVal {
-      def withTestConfig: Project =
+      def withTestConfig(coverageMinimumPercent: Int = 100): Project =
         project
           .configs(EndToEndTest, IntegrationTest)
           .settings(javaOptions in Test += "-Duser.timezone=UTC")
           .settings(integrationTestSettings, endToEndTestSettings)
+          .settings(scoverageSettings(coverageMinimumPercent))
           .settings(
             e2e := (test in EndToEndTest).value,
             it := (test in IntegrationTest).value)
@@ -36,4 +37,10 @@ object TestConfig extends AutoPlugin {
       scalaSource in EndToEndTest := baseDirectory.value / "src/e2e/scala",
       parallelExecution in EndToEndTest := false,
       fork in EndToEndTest := true)
+
+  private def scoverageSettings(coverageMinimumValue: Int): Seq[Def.Setting[_]] =
+    Seq(
+      coverageEnabled := true,
+      coverageMinimum := coverageMinimumValue,
+      coverageFailOnMinimum := true)
 }

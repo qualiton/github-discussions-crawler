@@ -89,6 +89,15 @@ jobs:
         name: Run e2e tests
         command: sbt e2e:test
 
+  coverage:
+    <<: *default_machine
+    steps:
+    - *attach_workspace
+    - *restore_cache
+    - run:
+        name: Generate coverage report
+        command: sbt coverageReport
+
   build:
     <<: *default_image
     <<: *defaults
@@ -156,14 +165,17 @@ workflows:
     - e2etest:
         requires:
         - compile
+    - coverage:
+        requires:
+        - test
+        - ittest
+        - e2etest
     - build:
         filters:
           branches:
             only: master
         requires:
-        - test
-        - ittest
-        - e2etest
+        - coverage
     - release_chart:
         requires:
         - build
