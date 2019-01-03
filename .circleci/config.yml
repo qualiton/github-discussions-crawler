@@ -27,6 +27,12 @@ version: 2.1
     paths:
     - project/*
 
+.persist_coverage_date_to_workspace: &persist_coverage_date_to_workspace
+  persist_to_workspace:
+    root: ~/project
+    paths:
+    - project/github-discussions-crawler/*/target/scala-2.12/scoverage-data/scoverage.measurements.*
+
 .cache_key: &cache_key
               v1-repo-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-{{ .Branch }}-{{ checksum "project/Dependencies.scala"}}
 
@@ -70,7 +76,7 @@ jobs:
     - run:
         name: Run tests
         command: sbt test
-    - *persist_to_workspace
+    - *persist_coverage_date_to_workspace
 
   ittest:
     <<: *default_machine
@@ -80,7 +86,7 @@ jobs:
     - run:
         name: Run integration tests
         command: sbt it:test
-    - *persist_to_workspace
+    - *persist_coverage_date_to_workspace
 
   e2etest:
     <<: *default_machine
@@ -90,7 +96,7 @@ jobs:
     - run:
         name: Run e2e tests
         command: sbt e2e:test
-    - *persist_to_workspace
+    - *persist_coverage_date_to_workspace
 
   coverage:
     <<: *default_machine
