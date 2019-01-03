@@ -1,5 +1,6 @@
 import sbt._
 import sbt.Keys._
+import scoverage.ScoverageKeys._
 
 object TestConfig extends AutoPlugin {
 
