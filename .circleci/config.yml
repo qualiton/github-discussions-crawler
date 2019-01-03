@@ -70,6 +70,7 @@ jobs:
     - run:
         name: Run tests
         command: sbt test
+    - *persist_to_workspace
 
   ittest:
     <<: *default_machine
@@ -79,6 +80,7 @@ jobs:
     - run:
         name: Run integration tests
         command: sbt it:test
+    - *persist_to_workspace
 
   e2etest:
     <<: *default_machine
@@ -88,6 +90,7 @@ jobs:
     - run:
         name: Run e2e tests
         command: sbt e2e:test
+    - *persist_to_workspace
 
   coverage:
     <<: *default_machine
