@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/aedc16310aad4f5da6b9f88c0ddbf3af)](https://app.codacy.com/app/krisztian-lachata/github-discussions-crawler?utm_source=github.com&utm_medium=referral&utm_content=qualiton/github-discussions-crawler&utm_campaign=Badge_Grade_Settings)
 # Github Discussions Crawler and Slack Publisher [![CircleCI](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master.svg?style=shield)](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master)
 
 Using [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-team-discussions/) is an excellent way of promoting team collaboration. It can be used for [Architecture Decision Records](https://www.thoughtworks.com/radar/techniques/lightweight-architecture-decision-records), team meeting memos, RFCs.
