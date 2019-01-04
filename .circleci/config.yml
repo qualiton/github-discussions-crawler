@@ -48,6 +48,20 @@ version: 2.1
     command: |
       sh .circleci/scripts/init_github.sh
 
+commands:
+  rename_coverage_data_files:
+    description: "Rename coverage data files"
+    parameters:
+      type:
+        default: "test"
+        type: enum
+        enum: ["test", "it", "e2e"]
+    steps:
+    - run:
+        name: Rename coverage data files
+        command: |
+          find . -iname "scoverage.measurements.*" -exec rename 's/(.*)/$1.<< parameters.type >/' '{}' \;
+
 jobs:
   compile:
     <<: *default_image
@@ -76,6 +90,8 @@ jobs:
     - run:
         name: Run tests
         command: sbt test
+    - rename_coverage_data_files:
+        type: "test"
     - *persist_coverage_date_to_workspace
 
   ittest:
@@ -86,6 +102,8 @@ jobs:
     - run:
         name: Run integration tests
         command: sbt it:test
+    - rename_coverage_data_files:
+        type: "it"
     - *persist_coverage_date_to_workspace
 
   e2etest:
@@ -96,6 +114,8 @@ jobs:
     - run:
         name: Run e2e tests
         command: sbt e2e:test
+    - rename_coverage_data_files:
+        type: "e2e"
     - *persist_coverage_date_to_workspace
 
   coverage:
