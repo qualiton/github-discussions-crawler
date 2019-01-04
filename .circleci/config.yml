@@ -19,7 +19,7 @@ version: 2.1
 
 .attach_workspace: &attach_workspace
   attach_workspace:
-    at: ~/
+    at: ~/project
 
 .persist_to_workspace: &persist_to_workspace
   persist_to_workspace:
