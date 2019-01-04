@@ -1,6 +1,5 @@
 import sbt._
 import sbt.Keys._
-import scoverage.ScoverageKeys._
 
 object TestConfig extends AutoPlugin {
 
@@ -41,7 +40,6 @@ object TestConfig extends AutoPlugin {
 
   private def scoverageSettings(coverageMinimumValue: Double): Seq[Def.Setting[_]] =
     Seq(
-      coverageEnabled := true,
       coverageMinimum := coverageMinimumValue,
       coverageFailOnMinimum := true)
 }

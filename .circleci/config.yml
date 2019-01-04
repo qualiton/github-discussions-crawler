@@ -90,7 +90,7 @@ jobs:
     - *restore_cache
     - run:
         name: Run tests
-        command: sbt test
+        command: sbt coverage test
     - store_coverage_files:
         test_type: "test"
 
@@ -101,7 +101,7 @@ jobs:
     - *restore_cache
     - run:
         name: Run integration tests
-        command: sbt it:test
+        command: sbt coverage it:test
     - store_coverage_files:
         test_type: "it"
 
@@ -112,7 +112,7 @@ jobs:
     - *restore_cache
     - run:
         name: Run e2e tests
-        command: sbt e2e:test
+        command: sbt coverage e2e:test
     - store_coverage_files:
         test_type: "e2e"
 
