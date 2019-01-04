@@ -1,4 +1,4 @@
-# Github Discussions Crawler and Slack Publisher [![CircleCI](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master.svg?style=shield)](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master)
+# Github Discussions Crawler and Slack Publisher [![CircleCI](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master.svg?style=shield)](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master) [![Coverage Status](https://coveralls.io/repos/github/qualiton/github-discussions-crawler/badge.svg?branch=convert_to_bot)](https://coveralls.io/github/qualiton/github-discussions-crawler?branch=convert_to_bot)
 
 Using [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-team-discussions/) is an excellent way of promoting team collaboration. It can be used for [Architecture Decision Records](https://www.thoughtworks.com/radar/techniques/lightweight-architecture-decision-records), team meeting memos, RFCs.
 

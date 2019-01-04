@@ -124,8 +124,9 @@ jobs:
     - run:
         name: Generate coverage report
         command: |
-          ls -laR | grep "scoverage.measurements"
           sbt coverageReport
+          sbt coverageAggregate
+          sbt coveralls
 
   build:
     <<: *default_image
