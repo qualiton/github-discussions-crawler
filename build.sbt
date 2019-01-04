@@ -15,20 +15,20 @@ lazy val common =
 
 lazy val slackapiclient =
   (project in file("slackapiclient"))
-    .withTestConfig(40)
+    .withTestConfig(40.62)
     .withDependencies
 
 lazy val crawler =
   (project in file("crawler"))
     .dependsOn(database % "test->test;compile->compile", common % "test->test;compile->compile", slackapiclient % "test->test;compile->compile")
-    .withTestConfig(83)
+    .withTestConfig(82.73)
     .withDependencies
 
 lazy val server =
   (project in file("server"))
     .dependsOn(crawler % "test->test;compile->compile")
     .settings(Seq(sources in (Compile, doc) := Seq.empty)) // REASON: No documentation generated with unsuccessful compiler run
-    .withTestConfig(16)
+    .withTestConfig(16.31)
     .withDependencies
     .withLocalAlpn
 

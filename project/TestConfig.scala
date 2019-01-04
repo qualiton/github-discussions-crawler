@@ -13,7 +13,7 @@ object TestConfig extends AutoPlugin {
   object autoImport {
 
     implicit final class TestProject(val project: Project) extends AnyVal {
-      def withTestConfig(coverageMinimumPercent: Int = 100): Project =
+      def withTestConfig(coverageMinimumPercent: Double = 100): Project =
         project
           .configs(EndToEndTest, IntegrationTest)
           .settings(javaOptions in Test += "-Duser.timezone=UTC")
@@ -39,7 +39,7 @@ object TestConfig extends AutoPlugin {
       parallelExecution in EndToEndTest := false,
       fork in EndToEndTest := true)
 
-  private def scoverageSettings(coverageMinimumValue: Int): Seq[Def.Setting[_]] =
+  private def scoverageSettings(coverageMinimumValue: Double): Seq[Def.Setting[_]] =
     Seq(
       coverageEnabled := true,
       coverageMinimum := coverageMinimumValue,
