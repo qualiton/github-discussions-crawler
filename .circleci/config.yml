@@ -50,7 +50,7 @@ version: 2.1
 
 commands:
   store_coverage_files:
-    description: "Rename coverage data files"
+    description: "Store coverage data files"
     parameters:
       test_type:
         default: "test"
