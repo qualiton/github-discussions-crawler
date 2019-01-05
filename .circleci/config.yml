@@ -71,7 +71,7 @@ jobs:
     - *restore_cache
     - run:
         name: Compile project
-        command: sbt ";clean ;compile ;test:compile ;it:compile ;e2e:compile"
+        command: sbt ";clean ;coverage ;compile ;test:compile ;it:compile ;e2e:compile"
     - save_cache:
         name: Saving project cache
         key: *cache_key
@@ -90,7 +90,7 @@ jobs:
     - *restore_cache
     - run:
         name: Run tests
-        command: sbt clean coverage test
+        command: sbt coverage test
     - store_coverage_files:
         test_type: "test"
 
@@ -101,7 +101,7 @@ jobs:
     - *restore_cache
     - run:
         name: Run integration tests
-        command: sbt clean coverage it:test
+        command: sbt coverage it:test
     - store_coverage_files:
         test_type: "it"
 
@@ -112,7 +112,7 @@ jobs:
     - *restore_cache
     - run:
         name: Run e2e tests
-        command: sbt clean coverage e2e:test
+        command: sbt coverage e2e:test
     - store_coverage_files:
         test_type: "e2e"
 
