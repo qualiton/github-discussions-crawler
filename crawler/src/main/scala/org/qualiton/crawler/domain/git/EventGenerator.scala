@@ -10,7 +10,7 @@ import org.qualiton.crawler.domain.core._
 
 object EventGenerator {
 
-  def generateEvent[F[_] : Sync](maybePrevious: Option[Discussion], current: Discussion): F[Option[Event]] =
+  def generateEvent[F[_] : Sync](maybePrevious: Option[Discussion], current: Discussion): F[Option[DiscussionEvent]] =
     Sync[F].delay {
 
       def generateNewDiscussionDiscoveredEvent(currentDiscussion: Discussion): NewDiscussionDiscoveredEvent = {
@@ -21,11 +21,14 @@ object EventGenerator {
           discussionUrl = currentDiscussion.discussionUrl,
           teamName = currentDiscussion.teamName,
           totalCommentsCount = currentDiscussion.comments.size,
-          targeted = currentDiscussion.targeted.flatMap(refineV[TargetedSpec](_).toOption),
+          targeted =
+            Targeted(
+              persons = currentDiscussion.targetedPerson.flatMap(refineV[TargetedPersonSpec](_).toOption),
+              teams = currentDiscussion.targetedTeam.flatMap(refineV[TargetedTeamSpec](_).toOption)),
           createdAt = currentDiscussion.updatedAt)
       }
 
-      maybePrevious.fold[Option[Event]](generateNewDiscussionDiscoveredEvent(current).some) { previous =>
+      maybePrevious.fold[Option[DiscussionEvent]](generateNewDiscussionDiscoveredEvent(current).some) { previous =>
         if (current.comments.size > previous.comments.size) {
 
           import current._
@@ -34,7 +37,9 @@ object EventGenerator {
               author = c.author,
               avatarUrl = c.avatarUrl,
               commentUrl = c.commentUrl,
-              targeted = c.targeted.flatMap(refineV[TargetedSpec](_).toOption),
+              Targeted(
+                persons = c.targetedPerson.flatMap(refineV[TargetedPersonSpec](_).toOption),
+                teams = c.targetedTeam.flatMap(refineV[TargetedTeamSpec](_).toOption)),
               updatedAt = c.updatedAt))
 
           NewCommentsDiscoveredEvent(
@@ -45,7 +50,7 @@ object EventGenerator {
             createdAt = newCurrentComments.map(_.updatedAt).max).some
 
         } else {
-          none[Event]
+          none[DiscussionEvent]
         }
       }
     }

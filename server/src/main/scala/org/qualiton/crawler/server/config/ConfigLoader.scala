@@ -13,7 +13,9 @@ import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.string.NonEmptyString
 
 import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig, SlackConfig }
+import org.qualiton.crawler.domain.git.GithubApiClient
+import org.qualiton.slack.SlackApiClient
 
 trait ConfigLoader {
   final def loadOrThrow(): ServiceConfig =
@@ -30,32 +32,40 @@ object DefaultConfigLoader extends ConfigLoader {
       env[NonEmptyString]("GITHUB_API_TOKEN"),
       env[Option[FiniteDuration]]("GITHUB_REFRESH_INTERVAL"),
       env[NonEmptyString]("SLACK_API_TOKEN"),
+      env[Option[NonEmptyString]]("SLACK_DEFAULT_PUBLISH_CHANNEL"),
       env[Option[Boolean]]("SLACK_DISABLE_PUBLISH"),
       env[String Refined Uri]("DATABASE_JDBC_URL"),
       env[NonEmptyString]("DATABASE_USERNAME"),
       env[NonEmptyString]("DATABASE_PASSWORD"),
       env[Option[UserPortNumber]]("HTTP_PORT"),
-    ) { (githubApiToken, githubRefreshInterval, slackApiToken, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword, httpPort) =>
+    ) { (githubApiToken, githubRefreshInterval, slackApiToken, maybeSlackDefaultPublishChannel, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword, httpPort) =>
       ServiceConfig(
         httpPort = httpPort.getOrElse(9000),
-        gitConfig = GitConfig(
-          baseUrl = "https://api.github.com",
-          requestTimeout = 5.seconds,
-          apiToken = config.Secret(githubApiToken),
-          refreshInterval = githubRefreshInterval.getOrElse(1.minute)),
-        slackConfig = SlackConfig(
-          baseUri = "https://hooks.slack.com/services/",
-          requestTimeout = 5.seconds,
-          apiToken = config.Secret(slackApiToken),
-          enableNotificationPublish = slackDisablePublish.map(!_).getOrElse(true),
-          ignoreEarlierThan = 6.hours),
+        gitConfig =
+          GitConfig(
+            baseUrl = GithubApiClient.defaultGithubApiUrl,
+            requestTimeout = 5.seconds,
+            apiToken = config.Secret(githubApiToken),
+            refreshInterval = githubRefreshInterval.getOrElse(1.minute)),
+        publisherConfig =
+          PublisherConfig(
+            slackConfig =
+              SlackConfig(
+                baseUrl = SlackApiClient.defaultSlackApiUrl,
+                requestTimeout = 5.seconds,
+                pingInterval = 60.seconds,
+                apiToken = config.Secret(slackApiToken),
+                defaultChannelName = maybeSlackDefaultPublishChannel.getOrElse("git-discussions")),
+            enableNotificationPublish = slackDisablePublish.map(!_).getOrElse(true),
+            ignoreEarlierThan = 6.hours),
         databaseConfig =
           DatabaseConfig(
             databaseDriverName = "org.postgresql.Driver",
             jdbcUrl = dbJdbcUrl,
             username = dbUsername,
             password = config.Secret(dbPassword),
-            maximumPoolSize = 3))
+            maximumPoolSize = 3)
+      )
     }
   }
 }

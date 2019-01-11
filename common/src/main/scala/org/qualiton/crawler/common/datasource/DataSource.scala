@@ -1,29 +1,36 @@
-package org.qualiton.crawler.common.datasource
+package org.qualiton.crawler
+package common.datasource
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{ ContextShift, Effect, Sync }
+import cats.effect.{ ContextShift, Effect }
+import fs2.Stream
 
 import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 import doobie.hikari.HikariTransactor
 import eu.timepit.refined.auto.autoUnwrap
 
 import org.qualiton.crawler.common.config.DatabaseConfig
-import org.qualiton.crawler.common.util.Closeable
 
 object DataSource {
+
   def apply[F[_] : Effect : ContextShift](
       databaseConfig: DatabaseConfig,
       connectEC: ExecutionContext,
-      transactEC: ExecutionContext): F[DataSource[F]] = Sync[F].delay {
+      transactEC: ExecutionContext): DataSource[F] =
     new DataSource[F](databaseConfig, connectEC, transactEC)
-  }
+
+  def stream[F[_] : Effect : ContextShift](
+      databaseConfig: DatabaseConfig,
+      connectEC: ExecutionContext,
+      transactEC: ExecutionContext): Stream[F, DataSource[F]] =
+    Stream.bracket(DataSource[F](databaseConfig, connectEC, transactEC).delay)(_.close)
 }
 
 final class DataSource[F[_] : Effect : ContextShift] private(
     databaseConfig: DatabaseConfig,
     connectEC: ExecutionContext,
-    transactEC: ExecutionContext) extends Closeable[F] {
+    transactEC: ExecutionContext) {
 
   import databaseConfig._
 
@@ -39,8 +46,6 @@ final class DataSource[F[_] : Effect : ContextShift] private(
 
   def hikariTransactor = HikariTransactor(hikariDataSource, connectEC, transactEC)
 
-  override def close: F[Unit] =
-    Sync[F].delay {
-      hikariDataSource.close()
-    }
+  def close: F[Unit] =
+    hikariDataSource.close().delay
 }

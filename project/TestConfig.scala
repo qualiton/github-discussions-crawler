@@ -1,5 +1,6 @@
 import sbt._
 import sbt.Keys._
+import scoverage.ScoverageKeys._
 
 object TestConfig extends AutoPlugin {
 
@@ -12,11 +13,12 @@ object TestConfig extends AutoPlugin {
   object autoImport {
 
     implicit final class TestProject(val project: Project) extends AnyVal {
-      def withTestConfig: Project =
+      def withTestConfig(coverageMinimumPercent: Double = 100): Project =
         project
           .configs(EndToEndTest, IntegrationTest)
           .settings(javaOptions in Test += "-Duser.timezone=UTC")
           .settings(integrationTestSettings, endToEndTestSettings)
+          .settings(scoverageSettings(coverageMinimumPercent))
           .settings(
             e2e := (test in EndToEndTest).value,
             it := (test in IntegrationTest).value)
@@ -36,4 +38,9 @@ object TestConfig extends AutoPlugin {
       scalaSource in EndToEndTest := baseDirectory.value / "src/e2e/scala",
       parallelExecution in EndToEndTest := false,
       fork in EndToEndTest := true)
+
+  private def scoverageSettings(coverageMinimumValue: Double): Seq[Def.Setting[_]] =
+    Seq(
+      coverageMinimum := coverageMinimumValue,
+      coverageFailOnMinimum := true)
 }

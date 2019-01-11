@@ -1,4 +1,4 @@
-# Github Discussions Crawler and Slack Publisher [![CircleCI](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master.svg?style=shield)](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master)
+# Github Discussions Crawler and Slack Publisher [![CircleCI](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master.svg?style=shield)](https://circleci.com/gh/qualiton/github-discussions-crawler/tree/master) [![Coverage Status](https://coveralls.io/repos/github/qualiton/github-discussions-crawler/badge.svg?branch=convert_to_bot)](https://coveralls.io/github/qualiton/github-discussions-crawler?branch=convert_to_bot)
 
 Using [Github Team Discussion](https://blog.github.com/2017-11-20-introducing-team-discussions/) is an excellent way of promoting team collaboration. It can be used for [Architecture Decision Records](https://www.thoughtworks.com/radar/techniques/lightweight-architecture-decision-records), team meeting memos, RFCs.
 
@@ -16,14 +16,15 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 <a href="url"><img src="docs/new_comments.png" aligh="left" width="500" ></a>
 
-Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z]+` or `#[a-z_\\-]+`
+Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\\-]+` or `#[0-9a-zA-Z_\\-]+`.
+Targeted teams are notified directly via the team channel if the bot is added as user.
 
 ## Prerequisites
 
 - Kubernetes cluster with helm/tiller installed
 - Postgres SQL database to store Github discussion details
 - [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from
-- Slack Incoming Webhooks configured for your preferred slack channel.
+- [Slack Bot User](https://api.slack.com/bot-users) for Github Discussions Crawler
 
 ## Installing the Chart
 
@@ -41,6 +42,7 @@ Install from remote URL with the release name `github-discussions-crawler` into 
 helm upgrade github-discussions-crawler qualiton/github-discussions-crawler \
 	--set github.api_token=GITHUB_API_TOKEN \
 	--set slack.api_token=SLACK_API_TOKEN \
+	--set slack.default_publish_channel=SLACK_CHANNEL \
 	--set database.jdbc_url=DATABASE_JDBC_URL \
 	--set database.username=DATABASE_USERNAME \
 	--set database.password=DATABASE_PASSWORD \
@@ -62,6 +64,7 @@ github:
   api_token: GITHUB_API_TOKEN
 slack:
   api_token: SLACK_API_TOKEN
+  default_publish_channel: SLACK_CHANNEL
 database:
   jdbc_url: JDBC_URL
   username: USERNAME
@@ -92,6 +95,7 @@ Assuming that you already set the following:
 helm upgrade github-discussions-crawler qualiton/github-discussions-crawler \
 	--set github.api_token=GITHUB_API_TOKEN \
 	--set slack.api_token=SLACK_API_TOKEN \
+	--set slack.default_publish_channel=git-discussions \
 	--set database.jdbc_url=jdbc:postgresql://pg-sqlproxy-gcloud-sqlproxy.github-discussions-crawler:5432/gd-crawler-db \
 	--set database.username=gd-crawler-user \
 	--set database.password=DATABASE_PASSWORD \

@@ -3,8 +3,9 @@ import sbt.Keys._
 
 object Dependencies extends AutoPlugin {
 
-  private val CatsVersion = "1.4.0"
-  private val CatsEffectVersion = "1.0.0"
+  private val CatsVersion = "1.5.0"
+  private val CatsEffectVersion = "1.1.0"
+  private val Fs2Version = "1.0.2"
   private val CatsMtl = "0.4.0"
   private val CirisVersion = "0.11.0"
   private val DockerTestkitVersion = "0.9.6"
@@ -13,6 +14,8 @@ object Dependencies extends AutoPlugin {
   private val RefinedVersion = "0.9.2"
   private val CirceVersion = "0.10.0"
   private val MonocleVersion = "1.5.1-cats"
+  private val ScalaCacheVersion = "0.27.0"
+
 
   private val cats = Seq(
     "org.typelevel" %% "cats-core" % CatsVersion,
@@ -31,6 +34,15 @@ object Dependencies extends AutoPlugin {
     Seq(
       "com.google.guava" % "guava" % "25.0-jre")
 
+  private val fs2 =
+    Seq(
+      "co.fs2" %% "fs2-core" % Fs2Version,
+      "com.spinoco" %% "fs2-http" % "0.4.0")
+
+  private val scodec =
+    Seq(
+      "org.scodec" %% "scodec-core" % "1.10.3")
+
   private val circe =
     Seq(
       "core",
@@ -40,6 +52,7 @@ object Dependencies extends AutoPlugin {
       "java8",
       "generic-extras",
       "refined",
+      "optics",
       "fs2")
       .map(module => "io.circe" %% s"circe-$module" % CirceVersion)
 
@@ -49,7 +62,8 @@ object Dependencies extends AutoPlugin {
       "circe",
       "dsl",
       "blaze-client")
-      .map(module => "org.http4s" %% s"http4s-$module" % Http4sVersion)
+      .map(module => "org.http4s" %% s"http4s-$module" % Http4sVersion) ++ Seq(
+      "org.http4s" %% "http4s-websocket" % "0.2.1")
 
   private val logging =
     Seq(
@@ -84,10 +98,16 @@ object Dependencies extends AutoPlugin {
       "com.beachape" %% "enumeratum-circe" % "1.5.17",
       "com.beachape" %% "enumeratum-macros" % "1.5.9")
 
+  private val scalaCache = Seq(
+    "com.github.cb372" %% "scalacache-caffeine",
+    "com.github.cb372" %% "scalacache-cats-effect")
+    .map(_ % ScalaCacheVersion)
+
   private val others =
     Seq(
       "eu.timepit" %% "refined" % RefinedVersion,
       "eu.timepit" %% "refined-cats" % RefinedVersion,
+      "com.github.slack-scala-client" %% "slack-scala-client" % "0.2.4",
       "org.scalactic" %% "scalactic" % "3.0.5")
 
   private val test =
@@ -110,8 +130,11 @@ object Dependencies extends AutoPlugin {
     Seq(
       libraryDependencies ++=
       cats ++
+      fs2 ++
+      scodec ++
       ciris ++
       circe ++
+      scalaCache ++
       monocle ++
       enumeratum ++
       database ++

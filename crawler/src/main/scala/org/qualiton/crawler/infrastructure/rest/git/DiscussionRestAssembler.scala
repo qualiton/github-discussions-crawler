@@ -3,6 +3,7 @@ package org.qualiton.crawler.infrastructure.rest.git
 import cats.data.ValidatedNel
 import cats.effect.Sync
 import cats.instances.list._
+import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.traverse._
@@ -14,7 +15,7 @@ import eu.timepit.refined.types.string.NonEmptyString
 
 import org.qualiton.crawler.domain.core.Url
 import org.qualiton.crawler.domain.git.{ Comment, Discussion, ValidationError }
-import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 //TODO remove static
 object DiscussionRestAssembler {
@@ -43,7 +44,7 @@ object DiscussionRestAssembler {
 
     discussionValidated
       .toEither match {
-      case Right(a) => Sync[F].pure(a)
+      case Right(a) => a.pure[F]
       case Left(e) => Sync[F].raiseError(ValidationError("Cannot assemble discussion!", e.toList))
     }
   }

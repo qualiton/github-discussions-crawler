@@ -1,13 +1,13 @@
 package org.qualiton.crawler
 
 import java.time.Instant
+import java.util.concurrent.Executors
 
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import _root_.cats.syntax.flatMap._
 import _root_.cats.syntax.functor._
-import cats.effect.{ ExitCode, IO, IOApp }
+import cats.effect.{ ContextShift, IO }
 import cats.scalatest.{ EitherMatchers, ValidatedValues }
 import fs2.concurrent.SignallingRef
 
@@ -17,7 +17,7 @@ import doobie.util.transactor.Transactor
 import eu.timepit.refined._
 import eu.timepit.refined.auto._
 import eu.timepit.refined.collection.NonEmpty
-import eu.timepit.refined.string.Uri
+import eu.timepit.refined.string.{ Uri, Url }
 import eu.timepit.refined.types.net.UserPortNumber
 import io.circe.{ HCursor, Json }
 import io.circe.parser.parse
@@ -28,14 +28,16 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{ Millis, Seconds, Span }
 
 import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, SlackConfig }
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig, SlackConfig }
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ CommentPersistence, CommentsListPersistence, DiscussionPersistence }
 import org.qualiton.crawler.server.config.ServiceConfig
 import org.qualiton.crawler.server.main.Server
 import org.qualiton.crawler.testsupport.dockerkit.PostgresDockerTestKit
-import org.qualiton.crawler.testsupport.scalatest.{ GithubApiV3MockServerSupport, SlackIncomingWebhookMockServerSupport }
-import org.qualiton.crawler.testsupport.wiremock.{ GithubApiV3MockServer, SlackIncomingWebhookMockServer }
+import org.qualiton.crawler.testsupport.scalatest.GithubApiV3MockServerSupport
+import org.qualiton.crawler.testsupport.wiremock.GithubApiV3MockServer
+import org.qualiton.slack.testsupport.scalatest.{ SlackApiMockServerSupport, SlackRtmApiMockServerSupport }
+import org.qualiton.slack.testsupport.wiremock.SlackApiMockServer
 
 class CrawlerEndToEndSpec
   extends FeatureSpec
@@ -50,16 +52,21 @@ class CrawlerEndToEndSpec
     with BeforeAndAfterAll
     with BeforeAndAfterEach
     with GithubApiV3MockServerSupport
-    with SlackIncomingWebhookMockServerSupport
+    with SlackApiMockServerSupport
+    with SlackRtmApiMockServerSupport
     with PostgresDockerTestKit
     with Inside
-    with IOApp
     with LazyLogging {
 
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(
       timeout = Span(10, Seconds),
       interval = Span(100, Millis))
+
+  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val es = Executors.newCachedThreadPool()
+  implicit val timer = IO.timer(ec)
+  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -68,14 +75,12 @@ class CrawlerEndToEndSpec
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    run(List.empty).unsafeToFuture()
-    ()
+    Server.fromConfig(IO.pure(appConfig)).interruptWhen(stopSignal).compile.drain.unsafeRunAsyncAndForget()
   }
 
   override def afterAll(): Unit = {
     (stopSignal.set(true) >> dataSource.close).unsafeRunSync()
     super.afterAll()
-    ()
   }
 
   val appHttpPort: UserPortNumber = 9000
@@ -83,17 +88,23 @@ class CrawlerEndToEndSpec
   val appConfig =
     ServiceConfig(
       httpPort = appHttpPort,
-      gitConfig = GitConfig(
-        baseUrl = refineV[Uri](s"http://localhost:${ GithubApiV3MockServer.GithubApiV3Port }").getOrElse(throw new IllegalArgumentException),
-        requestTimeout = 5.seconds,
-        apiToken = config.Secret(refineV[NonEmpty](GithubApiV3MockServer.testApiToken).getOrElse(throw new IllegalArgumentException)),
-        refreshInterval = 1.second),
-      slackConfig = SlackConfig(
-        baseUri = refineV[Uri](s"http://localhost:${ SlackIncomingWebhookMockServer.SlackIncomingWebhookPort }").getOrElse(throw new IllegalArgumentException),
-        requestTimeout = 5.seconds,
-        apiToken = config.Secret(refineV[NonEmpty](SlackIncomingWebhookMockServer.testApiToken).getOrElse(throw new IllegalArgumentException)),
-        enableNotificationPublish = true,
-        ignoreEarlierThan = 6.hours),
+      gitConfig =
+        GitConfig(
+          baseUrl = refineV[Url](s"http://localhost:${ GithubApiV3MockServer.GithubApiV3Port }").getOrElse(throw new IllegalArgumentException),
+          requestTimeout = 5.seconds,
+          apiToken = config.Secret(refineV[NonEmpty](GithubApiV3MockServer.testApiToken).getOrElse(throw new IllegalArgumentException)),
+          refreshInterval = 1.second),
+      publisherConfig =
+        PublisherConfig(
+          slackConfig =
+            SlackConfig(
+              baseUrl = refineV[Url](s"http://localhost:${ SlackApiMockServer.SlackApiPort }").getOrElse(throw new IllegalArgumentException),
+              requestTimeout = 5.seconds,
+              pingInterval = 5.seconds,
+              apiToken = config.Secret(SlackApiMockServer.testApiToken),
+              defaultChannelName = "default_channel"),
+          enableNotificationPublish = true,
+          ignoreEarlierThan = 6.hours),
       databaseConfig =
         DatabaseConfig(
           databaseDriverName = "org.postgresql.Driver",
@@ -102,14 +113,11 @@ class CrawlerEndToEndSpec
           password = config.Secret("postgres"),
           maximumPoolSize = 5))
 
-  lazy val dataSource: DataSource[IO] = DataSource[IO](appConfig.databaseConfig, global, global).unsafeRunSync()
+  lazy val dataSource: DataSource[IO] = DataSource[IO](appConfig.databaseConfig, ec, ec)
 
   lazy val transactor: Transactor[IO] = dataSource.hikariTransactor
 
   private val stopSignal: SignallingRef[IO, Boolean] = SignallingRef[IO, Boolean](false).unsafeRunSync()
-
-  override def run(args: List[String]): IO[ExitCode] =
-    Server.fromConfig(IO.pure(appConfig)).interruptWhen(stopSignal).compile.drain.map(_ => ExitCode.Success)
 
   feature("Crawler publishes new discussion discovered event") {
     scenario("New discussion is discovered with 0 comment and published to Slack") {
@@ -117,7 +125,10 @@ class CrawlerEndToEndSpec
       val teamId1 = 1L
       val discussionId1 = 1L
       val referenceInstant: Instant = Instant.now()
-      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
+      githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockRtmConnect()
+      slackApiMockServer.mockChatPostMessage()
 
       Then("new discussion is persisted to db")
       eventually {
@@ -139,7 +150,7 @@ class CrawlerEndToEndSpec
 
       And("slack should receive the publish post request with valid attachment")
       eventually {
-        val request = mockSlackIncomingWebhookMockServer.incomingWebhookCallRequest
+        val request = slackApiMockServer.findLastPostRequestFor("/api/chat.postMessage")
 
         val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
         val cursor: HCursor = doc.hcursor
@@ -169,7 +180,10 @@ class CrawlerEndToEndSpec
       val teamId1 = 1L
       val discussionId1 = 1L
       val referenceInstant: Instant = Instant.now()
-      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 2, referenceInstant)
+      githubApiV3MockServer.mockDiscussions(teamId1, 1, 2, referenceInstant)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockRtmConnect()
+      slackApiMockServer.mockChatPostMessage()
 
       Then("new discussion is persisted to db")
       eventually {
@@ -208,7 +222,7 @@ class CrawlerEndToEndSpec
 
       And("slack should receive the publish post request with valid attachment")
       eventually {
-        val request = mockSlackIncomingWebhookMockServer.incomingWebhookCallRequest
+        val request = slackApiMockServer.findLastPostRequestFor("/api/chat.postMessage")
 
         val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
         val cursor: HCursor = doc.hcursor
@@ -246,14 +260,17 @@ class CrawlerEndToEndSpec
       val discussionId1 = 1L
       val commentId = 1L
       val referenceInstant: Instant = Instant.now()
-      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
+      githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockRtmConnect()
+      slackApiMockServer.mockChatPostMessage()
       val firstUpdatedAt: Instant = eventually {
         val result = findDiscussionBy(teamId1, discussionId1)
         result.value.updatedAt
       }
 
       Then("a new comment is discovered")
-      mockGithubApiV3MockServer.mockDiscussions(teamId1, 1, 1, referenceInstant)
+      githubApiV3MockServer.mockDiscussions(teamId1, 1, 1, referenceInstant)
 
       Then("the new comment is persisted to db")
       eventually {
@@ -287,7 +304,7 @@ class CrawlerEndToEndSpec
 
       And("slack should receive the publish post request with valid attachment")
       eventually {
-        val request = mockSlackIncomingWebhookMockServer.incomingWebhookCallRequest
+        val request = slackApiMockServer.findLastPostRequestFor("/api/chat.postMessage")
 
         val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
         val cursor: HCursor = doc.hcursor
@@ -322,7 +339,7 @@ class CrawlerEndToEndSpec
     scenario("Status should return successfully") {
       When("Hitting the status endpoint")
       val uri = org.http4s.Uri.unsafeFromString(s"http://localhost:${ appHttpPort.value }").withPath("/internal/status")
-      val response = BlazeClientBuilder[IO](global).resource.use(_.expect[String](uri)).unsafeRunSync()
+      val response = BlazeClientBuilder[IO](ec).resource.use(_.expect[String](uri)).unsafeRunSync()
 
       Then("we should receive empty body")
       response shouldBe empty

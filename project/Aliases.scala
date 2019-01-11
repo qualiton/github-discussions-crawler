@@ -11,5 +11,5 @@ object Aliases extends AutoPlugin {
 
   lazy val aliases: Seq[Def.Setting[State => State]] =
     addCommandAlias("runServer", ";project server ;clean ;runMain org.qualiton.crawler.server.main.Main") ++
-    addCommandAlias("all-tests", ";clean ;test ;it ;e2e")
+    addCommandAlias("all-tests", ";clean ;coverage ;test ;it ;e2e")
 }

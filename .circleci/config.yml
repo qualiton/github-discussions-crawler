@@ -27,6 +27,12 @@ version: 2.1
     paths:
     - project/*
 
+.persist_coverage_data_to_workspace: &persist_coverage_data_to_workspace
+  persist_to_workspace:
+    root: ~/
+    paths:
+    - project/*/target/scala-2.12/scoverage-data/scoverage.measurements.*
+
 .cache_key: &cache_key
               v1-repo-{{ .Environment.CIRCLE_PROJECT_REPONAME }}-{{ .Branch }}-{{ checksum "project/Dependencies.scala"}}
 
@@ -42,6 +48,21 @@ version: 2.1
     command: |
       sh .circleci/scripts/init_github.sh
 
+commands:
+  store_coverage_files:
+    description: "Store coverage data files"
+    parameters:
+      test_type:
+        default: "test"
+        type: enum
+        enum: ["test", "it", "e2e"]
+    steps:
+    - run:
+        name: Rename coverage data files
+        command: |
+          find . -iname "scoverage.measurements.*" -exec rename 's/(.*)/$1.<< parameters.test_type >>/' '{}' \;
+    - *persist_coverage_data_to_workspace
+
 jobs:
   compile:
     <<: *default_image
@@ -50,7 +71,7 @@ jobs:
     - *restore_cache
     - run:
         name: Compile project
-        command: sbt ";clean ;compile ;test:compile ;it:compile ;e2e:compile"
+        command: sbt ";clean ;coverage ;compile ;test:compile ;it:compile ;e2e:compile"
     - save_cache:
         name: Saving project cache
         key: *cache_key
@@ -69,7 +90,9 @@ jobs:
     - *restore_cache
     - run:
         name: Run tests
-        command: sbt test
+        command: sbt coverage test
+    - store_coverage_files:
+        test_type: "test"
 
   ittest:
     <<: *default_machine
@@ -78,7 +101,9 @@ jobs:
     - *restore_cache
     - run:
         name: Run integration tests
-        command: sbt it:test
+        command: sbt coverage it:test
+    - store_coverage_files:
+        test_type: "it"
 
   e2etest:
     <<: *default_machine
@@ -87,7 +112,22 @@ jobs:
     - *restore_cache
     - run:
         name: Run e2e tests
-        command: sbt e2e:test
+        command: sbt coverage e2e:test
+    - store_coverage_files:
+        test_type: "e2e"
+
+  coverage:
+    <<: *default_machine
+    steps:
+    - *attach_workspace
+    - *restore_cache
+    - run:
+        name: Generate coverage report
+        command: |
+          ls -laR | grep "scoverage.measurements"
+          sbt coverageReport
+          sbt coverageAggregate
+          sbt coveralls
 
   build:
     <<: *default_image
@@ -156,14 +196,17 @@ workflows:
     - e2etest:
         requires:
         - compile
+    - coverage:
+        requires:
+        - test
+        - ittest
+        - e2etest
     - build:
         filters:
           branches:
             only: master
         requires:
-        - test
-        - ittest
-        - e2etest
+        - coverage
     - release_chart:
         requires:
         - build

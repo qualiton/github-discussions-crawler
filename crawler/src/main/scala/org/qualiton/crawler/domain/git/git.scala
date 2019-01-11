@@ -15,7 +15,8 @@ package git {
 
     def body: NonEmptyString
 
-    val targeted: Set[String] = Person.findAllMatchIn(body).map(_.group(1)).toSet ++ Team.findAllMatchIn(body).map(_.group(1)).toSet
+    val targetedPerson: Set[String] = Person.findAllMatchIn(body).map(_.group(1)).toSet
+    val targetedTeam: Set[String] = Team.findAllMatchIn(body).map(_.group(1)).toSet
   }
 
   final case class Discussion(
