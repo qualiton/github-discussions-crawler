@@ -33,11 +33,12 @@ object Docker extends AutoPlugin {
           tag = Some(version.value)
         )
       }
-  //      dockerCommands := {
-  //        val extraDockerCommands = Seq(Cmd("RUN", "apk --update add dumb-init"))
-  //        dockerCommands.value.head +: extraDockerCommands ++: dockerCommands.value.tail
-  //      },
-  //      dockerEntrypoint := Seq("/usr/bin/dumb-init", "--single-child", "--") ++ dockerEntrypoint.value)
+      //      dockerCommands := {
+      //        val extraDockerCommands = Seq(Cmd("RUN", "apk --update add dumb-init"))
+      //        dockerCommands.value.head +: extraDockerCommands ++: dockerCommands.value.tail
+      //      },
+      //      dockerEntrypoint := Seq("/usr/bin/dumb-init", "--single-child", "--") ++ dockerEntrypoint.value
+    )
 
   object autoImport {
 
