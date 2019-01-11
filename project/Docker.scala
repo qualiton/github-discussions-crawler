@@ -32,7 +32,7 @@ object Docker extends AutoPlugin {
           name = sys.env.getOrElse("CONTAINER_NAME", moduleName.value),
           tag = Some(version.value)
         )
-      },
+      }
   //      dockerCommands := {
   //        val extraDockerCommands = Seq(Cmd("RUN", "apk --update add dumb-init"))
   //        dockerCommands.value.head +: extraDockerCommands ++: dockerCommands.value.tail
