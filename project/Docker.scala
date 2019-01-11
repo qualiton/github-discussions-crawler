@@ -1,7 +1,7 @@
 import com.typesafe.sbt.SbtNativePackager.autoImport.{ maintainer, packageDescription, packageName, packageSummary }
 import com.typesafe.sbt.packager.Keys.{ dockerAlias, dockerBuildOptions, dockerUpdateLatest }
 import com.typesafe.sbt.packager.archetypes.scripts.AshScriptPlugin
-import com.typesafe.sbt.packager.docker.{ DockerAlias, DockerPlugin }
+import com.typesafe.sbt.packager.docker.{ Cmd, DockerAlias, DockerPlugin }
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.{ Docker => TypesafeDocker, _ }
 import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport.Universal
 import sbt.{ AutoPlugin, Compile, Project }
@@ -18,7 +18,7 @@ object Docker extends AutoPlugin {
         "-J-XX:MaxRAMFraction=2"),
       aggregate in TypesafeDocker := false,
       mainClass in Compile := Some("org.qualiton.crawler.server.main.Main"),
-      dockerBaseImage := "openjdk:8-jdk",
+      dockerBaseImage := "openjdk:8-jdk-alpine",
       dockerUpdateLatest := true,
       dockerBuildOptions := "--rm=false" +: dockerBuildOptions.value.tail,
       packageName in TypesafeDocker := moduleName.value,
@@ -32,13 +32,12 @@ object Docker extends AutoPlugin {
           name = sys.env.getOrElse("CONTAINER_NAME", moduleName.value),
           tag = Some(version.value)
         )
-      }
-      //      dockerCommands := {
-      //        val extraDockerCommands = Seq(Cmd("RUN", "apk --update add dumb-init"))
-      //        dockerCommands.value.head +: extraDockerCommands ++: dockerCommands.value.tail
-      //      },
-      //      dockerEntrypoint := Seq("/usr/bin/dumb-init", "--single-child", "--") ++ dockerEntrypoint.value
-    )
+      },
+      dockerCommands := {
+        val extraDockerCommands = Seq(Cmd("RUN", "apk --update add dumb-init"))
+        dockerCommands.value.head +: extraDockerCommands ++: dockerCommands.value.tail
+      },
+      dockerEntrypoint := Seq("/usr/bin/dumb-init", "--single-child", "--") ++ dockerEntrypoint.value)
 
   object autoImport {
 
