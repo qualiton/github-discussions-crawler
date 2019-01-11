@@ -18,7 +18,7 @@ object Docker extends AutoPlugin {
         "-J-XX:MaxRAMFraction=2"),
       aggregate in TypesafeDocker := false,
       mainClass in Compile := Some("org.qualiton.crawler.server.main.Main"),
-      dockerBaseImage := "openjdk:8-jdk-alpine",
+      dockerBaseImage := "openjdk:8-jdk",
       dockerUpdateLatest := true,
       dockerBuildOptions := "--rm=false" +: dockerBuildOptions.value.tail,
       packageName in TypesafeDocker := moduleName.value,
