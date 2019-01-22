@@ -50,7 +50,10 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
   }
 
   private def findChannelByName(channelName: String): F[Option[Channel]] = memoizeF[F, Option[Channel]](Some(10.minutes)) {
-    slackApiClient.findChannelByName(channelName)
+    for {
+      _ <- logger.info(s"Resolving channelName $channelName").delay
+      channel <- slackApiClient.findChannelByName(channelName.substring(1))
+    } yield channel
   }
 }
 

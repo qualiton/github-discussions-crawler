@@ -12,7 +12,9 @@ case class Hello(
 case class Message(
     ts: String,
     channel: String,
-    user: String,
+    user: Option[String],
+    bot_id: Option[String],
+    username: String,
     text: String,
     is_starred: Option[Boolean],
     thread_ts: Option[String]) extends SlackEvent
