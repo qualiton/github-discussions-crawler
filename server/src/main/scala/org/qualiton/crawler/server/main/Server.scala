@@ -1,6 +1,8 @@
 package org.qualiton.crawler
 package server.main
 
+import java.util.concurrent.ExecutorService
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
@@ -20,7 +22,7 @@ import org.qualiton.crawler.server.config.ServiceConfig
 object Server extends LazyLogging {
 
   def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig])
-    (implicit ec: ExecutionContext): Stream[F, ExitCode] = {
+    (implicit ec: ExecutionContext, es: ExecutorService): Stream[F, ExitCode] = {
 
     val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => logger.error(t.getMessage, t).delay
 
