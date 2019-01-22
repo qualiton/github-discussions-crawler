@@ -2,7 +2,15 @@ apiVersion: v1
 entries:
   github-discussions-crawler:
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.90908778Z
+    created: 2019-01-22T22:39:37.174712443Z
+    description: Publishing github discussion events to slack
+    digest: 62a2db99110c68e30cdaeb7aaba879a83119bc6289ce1676d4e0a37129092a14
+    name: github-discussions-crawler
+    urls:
+    - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.18.tgz
+    version: 0.0.18
+  - apiVersion: v1
+    created: 2019-01-22T22:39:37.174532802Z
     description: Publishing github discussion events to slack
     digest: 944e2335a2e2ccac765a926c6b90a2d438a7a6a723473395888468fa1f81bb64
     name: github-discussions-crawler
@@ -10,7 +18,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.17.tgz
     version: 0.0.17
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.908801595Z
+    created: 2019-01-22T22:39:37.174352766Z
     description: Publishing github discussion events to slack
     digest: 80d4cb9e6219904e05f2a0139b4173110c39cd6bb58c829b2e8f20c61eee7a8a
     name: github-discussions-crawler
@@ -18,7 +26,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.16.tgz
     version: 0.0.16
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.908505153Z
+    created: 2019-01-22T22:39:37.174171494Z
     description: Publishing github discussion events to slack
     digest: 398671b0703631ed74011e13b4231c1e0238cae193dab922f93d266b5e5ef389
     name: github-discussions-crawler
@@ -26,7 +34,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.15.tgz
     version: 0.0.15
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.908193346Z
+    created: 2019-01-22T22:39:37.173989893Z
     description: Publishing github discussion events to slack
     digest: 3f2356ab6b99ee5793f1e4ee1ae23830e59e09b92c1e3d96df97b2d76b58290d
     name: github-discussions-crawler
@@ -34,7 +42,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.14.tgz
     version: 0.0.14
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.907861843Z
+    created: 2019-01-22T22:39:37.173804106Z
     description: Publishing github discussion events to slack
     digest: b17041f45771e72276a32a2ee36ff505706e7dad8fa4a8d031007eae1ef86f87
     name: github-discussions-crawler
@@ -42,7 +50,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.13.tgz
     version: 0.0.13
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.905405631Z
+    created: 2019-01-22T22:39:37.173617633Z
     description: Publishing github discussion events to slack
     digest: 35462687d4fd386e7b8ea1afb320aa7a0497e8dbeed1faef474b4639df22aaf4
     name: github-discussions-crawler
@@ -50,7 +58,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.12.tgz
     version: 0.0.12
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.90509696Z
+    created: 2019-01-22T22:39:37.173413364Z
     description: Publishing github discussion events to slack
     digest: 2765cd1d9008352a033df9710562ef0e879b0d56f7bd2d7ff6f48ed429f9c5bd
     name: github-discussions-crawler
@@ -58,7 +66,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.11.tgz
     version: 0.0.11
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.904758231Z
+    created: 2019-01-22T22:39:37.173213932Z
     description: Publishing github discussion events to slack
     digest: 457cf5f9812fa1a2302d83428a4651e66daf3e9e747df01c671784038536e462
     name: github-discussions-crawler
@@ -66,7 +74,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.10.tgz
     version: 0.0.10
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.910589246Z
+    created: 2019-01-22T22:39:37.175686452Z
     description: Publishing github discussion events to slack
     digest: 4432cf09118f7f1a0f30ff6ccef153966edeaf72121533630802cb5cdf97ae74
     name: github-discussions-crawler
@@ -74,7 +82,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.9.tgz
     version: 0.0.9
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.910309869Z
+    created: 2019-01-22T22:39:37.175470434Z
     description: Publishing github discussion events to slack
     digest: 8066c854a590a48cb6a149ca9ccbae0af373d15eadbe97c29e5d5382f5df6119
     name: github-discussions-crawler
@@ -82,7 +90,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.8.tgz
     version: 0.0.8
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.909965462Z
+    created: 2019-01-22T22:39:37.175276156Z
     description: Publishing github discussion events to slack
     digest: 2dd68789f8511c62dbde5dfa353f798f486574c6000e5b43314fe548611aea32
     name: github-discussions-crawler
@@ -90,7 +98,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.7.tgz
     version: 0.0.7
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.909679668Z
+    created: 2019-01-22T22:39:37.175095778Z
     description: Publishing github discussion events to slack
     digest: d4e8b2df7b9ae0d673d1eec506fbca09b697683e5481edd59cdf344887f0db02
     name: github-discussions-crawler
@@ -98,11 +106,11 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.6.tgz
     version: 0.0.6
   - apiVersion: v1
-    created: 2019-01-22T22:13:20.909397836Z
+    created: 2019-01-22T22:39:37.174909402Z
     description: Publishing github discussion events to slack
     digest: 4be3e96dad72dbc1aacf4051e09dd86796dd2be76e4497ae6e799387d9347b1f
     name: github-discussions-crawler
     urls:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.5.tgz
     version: 0.0.5
-generated: 2019-01-22T22:13:20.904259137Z
+generated: 2019-01-22T22:39:37.172891118Z
