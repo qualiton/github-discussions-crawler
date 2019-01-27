@@ -11,10 +11,10 @@ import shapeless.{ Witness => W }
 
 package object core {
 
-  type TargetedPersonSpec = MatchesRegex[W.`"@[0-9a-zA-Z\\\\-_]+"`.T]
+  type TargetedPersonSpec = MatchesRegex[W.`"\\\\@[\\\\w\\\\-]+"`.T]
   type TargetedPerson = String Refined TargetedPersonSpec
 
-  type TargetedTeamSpec = MatchesRegex[W.`"#[0-9a-zA-Z\\\\-_]+"`.T]
+  type TargetedTeamSpec = MatchesRegex[W.`"\\\\#[\\\\w\\\\-]+"`.T]
   type TargetedTeam = String Refined TargetedTeamSpec
 
   type Url = String Refined RefinedUrl

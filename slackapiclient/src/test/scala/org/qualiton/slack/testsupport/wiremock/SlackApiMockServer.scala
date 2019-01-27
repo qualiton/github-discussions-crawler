@@ -89,11 +89,11 @@ class SlackApiMockServer(slackApiPort: Int = SlackApiPort) extends ResourceSuppo
         .withBody(prepareResponse(resource, error)
           .replaceAll("URL", s"ws://$SlackRtmApiHost:$SlackRtmApiPort/rtm"))))
 
-  def findLastGetRequestFor(path: String): LoggedRequest =
-    wireMock.find(getRequestedFor(urlEqualTo(path))).asScala.last
+  def findGetRequestsFor(path: String): List[LoggedRequest] =
+    wireMock.find(getRequestedFor(urlEqualTo(path))).asScala.toList
 
-  def findLastPostRequestFor(path: String): LoggedRequest =
-    wireMock.find(postRequestedFor(urlEqualTo(path))).asScala.last
+  def findPostRequestsFor(path: String): List[LoggedRequest] =
+    wireMock.find(postRequestedFor(urlEqualTo(path))).asScala.toList
 
   def resetRequests(): Unit =
     wireMock.resetRequests()

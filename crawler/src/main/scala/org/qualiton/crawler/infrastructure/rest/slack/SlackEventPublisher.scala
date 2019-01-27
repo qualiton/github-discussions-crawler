@@ -6,6 +6,7 @@ import scala.concurrent.duration._
 
 import cats.effect.{ ConcurrentEffect, Effect, Timer }
 import cats.instances.list._
+import cats.instances.option._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
@@ -40,10 +41,11 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
 
   override def publishDiscussionEvent(event: DiscussionEvent): F[Unit] = {
     findChannelByName(defaultChannelName)
-      .flatMap(_.fold[F[Unit]](F.raiseError(SlackEventPublisherError(s"Channel `$defaultChannelName` is not defined in Slack"))) { channel =>
+      .flatMap(_.fold[F[Unit]](F.raiseError(SlackEventPublisherError(s"Default channel `$defaultChannelName` is not defined in Slack"))) { channel =>
         for {
           message <- fromDomain(event).delay
-          channelIds <- event.targeted.teams.toList.traverse(findChannelByName(_)).map(channel.id :: _.flatten.map(_.id.drop(1)))
+          channelIds <- event.targeted.teams.toList.traverse(findChannelByName(_)).map(channel.id :: _.flatten.map(_.id))
+          _ <- logger.info(s"Sending message `$message` to $channelIds").delay
           _ <- channelIds.traverse(slackApiClient.postChatMessage(_, message))
         } yield ()
       })
@@ -53,8 +55,9 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
     for {
       _ <- logger.info(s"Resolving channelName $channelName").delay
       resolvableChannelName = if (channelName.startsWith("#")) channelName.substring(1) else channelName
-      channel <- slackApiClient.findChannelByName(resolvableChannelName)
-    } yield channel
+      maybeChannel <- slackApiClient.findChannelByName(resolvableChannelName)
+      _ <- maybeChannel.traverse(c => logger.info(s"Resolved channel $c").delay)
+    } yield maybeChannel
   }
 }
 
@@ -70,7 +73,7 @@ object SlackEventPublisher {
       slackApiPublisher <- stream(slackApiClient, slackConfig.defaultChannelName)
     } yield slackApiPublisher
 
-  case class SlackEventPublisherError(message: String) extends Exception(message)
+  case class SlackEventPublisherError(message: String) extends Throwable(message)
 
 }
 

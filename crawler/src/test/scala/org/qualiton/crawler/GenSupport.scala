@@ -2,14 +2,17 @@ package org.qualiton.crawler
 
 import java.time.Instant
 
+import com.mifmif.common.regex.Generex
+import eu.timepit.refined.api.RefType
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.refineV
 import eu.timepit.refined.scalacheck.{ AnyInstances, BooleanInstances, CharInstances, CollectionInstances, GenericInstances, NumericInstances, RefTypeInstances, StringInstances }
-import eu.timepit.refined.string.{ Url => RefinedUrl }
+import eu.timepit.refined.string.{ MatchesRegex, Url => RefinedUrl }
 import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.string.NonEmptyString
 import org.scalacheck.{ Arbitrary, Gen, ScalacheckShapeless }
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import shapeless.Witness
 
 import org.qualiton.crawler.domain.core.Url
 
@@ -59,4 +62,18 @@ trait GenSupport
       .fold(e => throw new IllegalStateException(s"Error generating a valid NonEmptyString: $e"), identity)))
 
   implicit val arbUrl: Arbitrary[Url] = Arbitrary(urlGen)
+
+  implicit def refinedRegexArbitrary[F[_, _] : RefType, S](implicit wit: Witness.Aux[S], ev: S <:< String): Arbitrary[F[String, MatchesRegex[S]]] = {
+
+    //Generex does not like anchored regexes at all.
+    def unanchor(s: String): String = s.stripPrefix("^").stripSuffix("$")
+
+    val gen = Gen.posNum[Long].map { seed =>
+      val regGen: Generex = new Generex(unanchor(ev(wit.value)))
+      regGen.setSeed(seed)
+      regGen.random()
+    }
+
+    arbitraryRefType[F, String, MatchesRegex[S]](gen)
+  }
 }

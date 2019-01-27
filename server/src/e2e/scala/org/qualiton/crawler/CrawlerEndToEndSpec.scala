@@ -71,6 +71,7 @@ class CrawlerEndToEndSpec
   override def beforeEach(): Unit = {
     super.beforeEach()
     resetTables()
+    slackApiMockServer.resetRequests()
   }
 
   override def beforeAll(): Unit = {
@@ -126,7 +127,7 @@ class CrawlerEndToEndSpec
       val discussionId1 = 1L
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
-      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName, "targeted-channel-1")
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
 
@@ -148,12 +149,52 @@ class CrawlerEndToEndSpec
         }
       }
 
-      And("slack should receive the publish post request with valid attachment")
+      And("all the slack notifications should be sent out")
       eventually {
-        val request = slackApiMockServer.findLastPostRequestFor("/api/chat.postMessage")
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+        requests should have size 2
+      }
+
+      And("the slack default channel should receive the publish post request with valid attachment")
+      eventually {
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+
+        val request = requests.head
 
         val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
         val cursor: HCursor = doc.hcursor
+        cursor.downField("channel").as[String] should beRight("CHANNEL_ID1")
+
+        val message = cursor.downField("attachments").downArray.first
+
+        message.downField("pretext").as[String] should beRight("New discussion has been discovered")
+        message.downField("color").as[String] should beRight("good")
+        message.downField("author_name").as[String] should beRight("lachatak")
+        message.downField("author_icon").as[String] should beRight("https://avatars0.githubusercontent.com/u/5830214?v=4")
+        message.downField("title").as[String] should beRight(s"discussion-title-$discussionId1")
+        message.downField("title_link").as[String] should beRight(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+
+        val fields0 = message.downField("fields").downArray.first
+        fields0.downField("title").as[String] should beRight("Team")
+        fields0.downField("value").as[String] should beRight("Test Team")
+        fields0.downField("short").as[Boolean] should beRight(true)
+
+        val fields1 = message.downField("fields").downArray.first.right
+        fields1.downField("title").as[String] should beRight("Targeted")
+        fields1.downField("value").as[String] should beRight(s"@targeted-person-$discussionId1, #targeted-channel-$discussionId1")
+        fields1.downField("short").as[Boolean] should beRight(false)
+      }
+
+      And("the slack additional channel should receive the publish post request with valid attachment")
+      eventually {
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+
+        val request = requests.last
+
+        val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
+        val cursor: HCursor = doc.hcursor
+        cursor.downField("channel").as[String] should beRight("CHANNEL_ID2")
+
         val message = cursor.downField("attachments").downArray.first
 
         message.downField("pretext").as[String] should beRight("New discussion has been discovered")
@@ -181,7 +222,7 @@ class CrawlerEndToEndSpec
       val discussionId1 = 1L
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 2, referenceInstant)
-      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName, "targeted-channel-1")
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
 
@@ -220,15 +261,54 @@ class CrawlerEndToEndSpec
         }
       }
 
-      And("slack should receive the publish post request with valid attachment")
+      And("all the slack notifications should be sent out")
       eventually {
-        val request = slackApiMockServer.findLastPostRequestFor("/api/chat.postMessage")
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+        requests should have size 2
+      }
 
-        val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
+      And("the slack default channel should receive the publish post request with valid attachment")
+      eventually {
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+
+        val doc: Json = parse(requests.head.getBodyAsString).getOrElse(Json.Null)
         val cursor: HCursor = doc.hcursor
+        cursor.get[String]("channel") should beRight("CHANNEL_ID1")
         val message = cursor.downField("attachments").downArray.first
 
-        message.get[String]("pretext") should beRight("New discussion has been discovered")
+        message.get[String]("pretext") should beRight("New discussion has been discovered with 2 comments")
+        message.get[String]("color") should beRight("good")
+        message.get[String]("author_name") should beRight("lachatak")
+        message.get[String]("author_icon") should beRight("https://avatars0.githubusercontent.com/u/5830214?v=4")
+        message.get[String]("title") should beRight(s"discussion-title-$discussionId1")
+        message.get[String]("title_link") should beRight(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+
+        val field0 = message.downField("fields").downArray.first
+        field0.get[String]("title") should beRight("Team")
+        field0.get[String]("value") should beRight("Test Team")
+        field0.get[Boolean]("short") should beRight(true)
+
+        val field1 = message.downField("fields").downArray.first.right
+        field1.get[String]("title") should beRight("Comments")
+        field1.get[String]("value") should beRight("2")
+        field1.get[Boolean]("short") should beRight(true)
+
+        val fields2 = message.downField("fields").downArray.first.right.right
+        fields2.downField("title").as[String] should beRight("Targeted")
+        fields2.downField("value").as[String] should beRight(s"@targeted-person-$discussionId1, #targeted-channel-$discussionId1")
+        fields2.downField("short").as[Boolean] should beRight(false)
+      }
+
+      And("the slack additional channel should receive the publish post request with valid attachment")
+      eventually {
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+
+        val doc: Json = parse(requests.last.getBodyAsString).getOrElse(Json.Null)
+        val cursor: HCursor = doc.hcursor
+        cursor.get[String]("channel") should beRight("CHANNEL_ID2")
+        val message = cursor.downField("attachments").downArray.first
+
+        message.get[String]("pretext") should beRight("New discussion has been discovered with 2 comments")
         message.get[String]("color") should beRight("good")
         message.get[String]("author_name") should beRight("lachatak")
         message.get[String]("author_icon") should beRight("https://avatars0.githubusercontent.com/u/5830214?v=4")
@@ -261,7 +341,7 @@ class CrawlerEndToEndSpec
       val commentId = 1L
       val referenceInstant: Instant = Instant.now()
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 0, referenceInstant)
-      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName)
+      slackApiMockServer.mockConversationsList(appConfig.publisherConfig.slackConfig.defaultChannelName, "targeted-channel-1")
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
       val firstUpdatedAt: Instant = eventually {
@@ -302,12 +382,53 @@ class CrawlerEndToEndSpec
         }
       }
 
-      And("slack should receive the publish post request with valid attachment")
+      And("all the slack notifications should be sent out")
       eventually {
-        val request = slackApiMockServer.findLastPostRequestFor("/api/chat.postMessage")
+        val requests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage")
+        requests should have size 4
+      }
 
-        val doc: Json = parse(request.getBodyAsString).getOrElse(Json.Null)
+      And("the slack default channel should receive the publish post request with valid attachment")
+      eventually {
+        val newCommentRequests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage").drop(2)
+
+        val doc: Json = parse(newCommentRequests.head.getBodyAsString).getOrElse(Json.Null)
         val cursor: HCursor = doc.hcursor
+        cursor.get[String]("channel") should beRight("CHANNEL_ID1")
+
+        val message = cursor.downField("attachments").downArray.first
+
+        message.get[String]("pretext") should beRight("New comment has been discovered")
+        message.get[String]("color") should beRight("good")
+        message.get[String]("author_name") should beRight("lachatak")
+        message.get[String]("author_icon") should beRight("https://avatars0.githubusercontent.com/u/5830214?v=4")
+        message.get[String]("title") should beRight(s"discussion-title-$discussionId1")
+        message.get[String]("title_link") should beRight(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId")
+
+        val field0 = message.downField("fields").downArray.first
+        field0.get[String]("title") should beRight("Team")
+        field0.get[String]("value") should beRight("Test Team")
+        field0.get[Boolean]("short") should beRight(true)
+
+        val field1 = message.downField("fields").downArray.first.right
+        field1.get[String]("title") should beRight("Comments")
+        field1.get[String]("value") should beRight("1")
+        field1.get[Boolean]("short") should beRight(true)
+
+        val fields2 = message.downField("fields").downArray.first.right.right
+        fields2.downField("title").as[String] should beRight("Targeted")
+        fields2.downField("value").as[String] should beRight(s"@targeted-person-$commentId, #targeted-channel-$commentId")
+        fields2.downField("short").as[Boolean] should beRight(false)
+      }
+
+      And("the slack additional channel should receive the publish post request with valid attachment")
+      eventually {
+
+        val newCommentRequests = slackApiMockServer.findPostRequestsFor("/api/chat.postMessage").drop(2)
+        val doc: Json = parse(newCommentRequests.last.getBodyAsString).getOrElse(Json.Null)
+        val cursor: HCursor = doc.hcursor
+        cursor.get[String]("channel") should beRight("CHANNEL_ID2")
+
         val message = cursor.downField("attachments").downArray.first
 
         message.get[String]("pretext") should beRight("New comment has been discovered")
