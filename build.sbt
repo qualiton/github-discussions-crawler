@@ -21,7 +21,7 @@ lazy val slackapiclient =
 lazy val crawler =
   (project in file("crawler"))
     .dependsOn(database % "test->test;compile->compile", common % "test->test;compile->compile", slackapiclient % "test->test;compile->compile")
-    .withTestConfig(82.9)
+    .withTestConfig(83.3)
     .withDependencies
 
 lazy val server =
