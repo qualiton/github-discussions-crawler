@@ -15,8 +15,8 @@ class ChatMessageAssemblerSpec
   extends FreeSpecSupport
     with GenSupport {
 
-  "ChatMessageAssembler" - {
-    "should generate a NewDiscussionDiscoveredEvent with zero comments and empty targets" in forAll { newDiscussionDiscoveredEvent: NewDiscussionDiscoveredEvent =>
+  "NewDiscussionDiscoveredEvent" - {
+    "should be generated with zero comments and empty targets" in forAll { newDiscussionDiscoveredEvent: NewDiscussionDiscoveredEvent =>
 
       val newDiscussionDiscoveredEventWithZeroComments =
         newDiscussionDiscoveredEvent
@@ -37,7 +37,7 @@ class ChatMessageAssemblerSpec
       }
     }
 
-    "should generate a NewDiscussionDiscoveredEvent with more than 0 comments and empty targets" in {
+    "should be generated with more than 0 comments and empty targets" in {
       forAll { (newDiscussionDiscoveredEvent: NewDiscussionDiscoveredEvent, totalCommentsCount: Int Refined Greater[W.`1`.T]) =>
 
         val newDiscussionDiscoveredEventWithZeroComments =
@@ -65,14 +65,14 @@ class ChatMessageAssemblerSpec
       }
     }
 
-    "should generate a NewDiscussionDiscoveredEvent with more than 0 comments and more targets" in {
+    "should be generated with more than 0 comments and more targets" in {
       forAll { (newDiscussionDiscoveredEvent: NewDiscussionDiscoveredEvent, totalCommentsCount: Int Refined Greater[W.`1`.T], targetedPersons: NonEmptyList[TargetedPerson], targetedTeams: NonEmptyList[TargetedTeam]) =>
 
-        val newDiscussionDiscoveredEventWithZeroComments =
+        val newDiscussionDiscoveredEventWithComments =
           newDiscussionDiscoveredEvent
             .copy(totalCommentsCount = totalCommentsCount.value, targeted = Targeted(targetedPersons.toList.toSet, targetedTeams.toList.toSet))
 
-        val result: ChatMessage = ChatMessageAssembler.fromDomain(newDiscussionDiscoveredEventWithZeroComments)
+        val result: ChatMessage = ChatMessageAssembler.fromDomain(newDiscussionDiscoveredEventWithComments)
 
         val expectedTeamName = newDiscussionDiscoveredEvent.teamName.value
         val expectedTotalCommentsCount = totalCommentsCount.value.toString
@@ -94,4 +94,27 @@ class ChatMessageAssemblerSpec
       }
     }
   }
+
+  //  "NewCommentsDiscoveredEvent" - {
+  //    "should be generated with one comment and empty targets" in forAll { (newCommentsDiscoveredEvent: NewCommentsDiscoveredEvent, comment: NewComment) =>
+  //
+  //      val newCommentsDiscoveredEventWithComments =
+  //        newCommentsDiscoveredEvent
+  //          .copy(comment = Targeted(Set(), Set()))
+  //
+  //      val result: ChatMessage = ChatMessageAssembler.fromDomain(newCommentsDiscoveredEventWithComments)
+  //
+  //      val expectedTeamName = newDiscussionDiscoveredEvent.teamName.value
+  //      inside(result) {
+  //        case ChatMessage(None, List(Attachment(pretext, color, author_name, author_icon, title, title_link, Field("Team", `expectedTeamName`, true) :: Nil, ts))) =>
+  //          pretext should ===("New discussion has been discovered")
+  //          color should ===("good")
+  //          author_name should ===(newDiscussionDiscoveredEvent.author.value)
+  //          author_icon should ===(newDiscussionDiscoveredEvent.avatarUrl.value)
+  //          title should ===(newDiscussionDiscoveredEvent.title.value)
+  //          title_link should ===(newDiscussionDiscoveredEvent.discussionUrl.value)
+  //          ts should ===(newDiscussionDiscoveredEvent.createdAt.getEpochSecond)
+  //      }
+  //    }
+  //  }
 }
