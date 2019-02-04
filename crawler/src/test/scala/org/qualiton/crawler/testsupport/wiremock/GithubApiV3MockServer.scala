@@ -53,7 +53,7 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
   }
 
   def mockUserTeams(teamId: Long, httpStatus: Int = HttpStatus.SC_OK, resource: String = "/userteams.json"): StubMapping =
-    wireMock.register(get(urlEqualTo("/user/teams?direction=asc"))
+    wireMock.register(get(urlEqualTo("/user/teams?direction=asc&per_page=100"))
       .withHeader("Accept", equalTo("application/json"))
       .withHeader("Authorization", equalTo(s"Basic $testEncodedApiToken"))
       .willReturn(aResponse()
@@ -97,7 +97,7 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
         .toString()
     }
 
-    wireMock.register(get(urlEqualTo(s"/teams/$teamId/discussions?direction=asc"))
+    wireMock.register(get(urlEqualTo(s"/teams/$teamId/discussions?direction=asc&per_page=100"))
       .withHeader("Accept", equalTo("application/vnd.github.echo-preview+json"))
       .withHeader("Authorization", equalTo(s"Basic $testEncodedApiToken"))
       .willReturn(aResponse()
@@ -139,7 +139,7 @@ class GithubApiV3MockServer(githubApiV3Port: Int = GithubApiV3Port) extends Reso
         .toString()
     }
 
-    wireMock.register(get(urlEqualTo(s"/teams/$teamId/discussions/$discussionId/comments?direction=asc"))
+    wireMock.register(get(urlEqualTo(s"/teams/$teamId/discussions/$discussionId/comments?direction=asc&per_page=100"))
       .withHeader("Accept", equalTo("application/vnd.github.echo-preview+json"))
       .withHeader("Authorization", equalTo(s"Basic $testEncodedApiToken"))
       .willReturn(aResponse()
