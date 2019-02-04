@@ -39,7 +39,7 @@ class GithubHttp4sApiClient[F[_] : Effect] private(
   private def request(path: String, acceptHeader: Header): Request[F] =
     Request[F](
       method = Method.GET,
-      uri = Uri.unsafeFromString(baseUrl).withPath(path).withQueryParam("direction", "asc"),
+      uri = Uri.unsafeFromString(baseUrl).withPath(path).withQueryParam("direction", "asc").withQueryParam("per_page", "100"),
       headers = Headers(authorization, acceptHeader))
 
   private def sendReceiveStream[A: Decoder](request: Request[F]): Stream[F, A] = {
