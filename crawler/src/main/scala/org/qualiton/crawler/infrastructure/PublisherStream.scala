@@ -29,7 +29,7 @@ object PublisherStream extends LazyLogging {
 
     import publisherConfig.slackConfig._
 
-    val loggerPipe: fs2.Pipe[F, SlackEvent, ClientMessage] = _.evalMap(e => logger.info(s"log: ${ e.toString }").delay) >> Stream.empty
+    val loggerPipe: fs2.Pipe[F, SlackEvent, ClientMessage] = _.evalMap(e => logger.debug(s"log: ${ e.toString }").delay) >> Stream.empty
 
     def isEventRecent(event: DiscussionEvent): Boolean =
       Instant.now().minus(publisherConfig.ignoreEarlierThan.toHours, ChronoUnit.HOURS) isBefore event.createdAt
@@ -44,6 +44,7 @@ object PublisherStream extends LazyLogging {
         if (publisherConfig.enableNotificationPublish && isEventRecent(event)) {
           Stream.eval(eventPublisher.publishDiscussionEvent(event))
         } else {
+          logger.warn(s"Not sending update since event ($event) was created more than 6 hours ago!")
           Stream.empty
         }
     } yield ()
