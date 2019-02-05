@@ -2,7 +2,7 @@ package org.qualiton.slack.rtm
 
 package slack.models
 
-import org.qualiton.slack.models.{ Bot, Channel, DndStatus, Im, ReactionItem, User }
+import org.qualiton.slack.models.{ Attachment2, Bot, Channel, DndStatus, Im, ReactionItem, User }
 
 sealed trait SlackEvent
 
@@ -53,6 +53,14 @@ case class MessageReplied(
     event_ts: String,
     channel: String,
     message: ReplyMessage) extends SlackEvent
+
+case class BotMessage(
+    ts: String,
+    channel: String,
+    text: String,
+    bot_id: String,
+    username: Option[String],
+    attachments: Option[Seq[Attachment2]]) extends SlackEvent
 
 case class ChannelMarked(
     channel: String,
