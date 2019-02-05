@@ -24,7 +24,7 @@ object Server extends LazyLogging {
   def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig])
     (implicit ec: ExecutionContext, es: ExecutorService): Stream[F, ExitCode] = {
 
-    val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => logger.error(t.getMessage, t).delay
+    val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => logger.error(s"loggerErrorHandler: ${ t.getMessage }", t).delay
 
     implicit val retryPolicy = RetryPolicy[F](RetryPolicy.exponentialBackoff(2.minutes, 10), RetryPolicy.defaultRetriable)
 
