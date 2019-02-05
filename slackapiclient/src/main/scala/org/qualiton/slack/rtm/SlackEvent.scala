@@ -14,7 +14,7 @@ case class Message(
     channel: String,
     user: Option[String],
     bot_id: Option[String],
-    username: String,
+    username: Option[String],
     text: String,
     is_starred: Option[Boolean],
     thread_ts: Option[String]) extends SlackEvent
@@ -27,6 +27,14 @@ case class ChannelDeleted(
 
 case class ChannelRename(
     channel: Channel) extends SlackEvent
+
+case class ChannelArchive(
+    channel: String,
+    user: String) extends SlackEvent
+
+case class ChannelUnarchive(
+    channel: String,
+    user: String) extends SlackEvent
 
 case class ImCreated(
     user: String,
@@ -50,18 +58,48 @@ case class UserTyping(
     channel: String,
     user: String) extends SlackEvent
 
+case class BotAdded(
+    bot: Bot) extends SlackEvent
+
+case class BotChanged(
+    bot: Bot) extends SlackEvent
+
+case class Bot(
+    id: String,
+    app_id: String,
+    name: String)
+
 case class DndUpdatedUser(
-    `type`: String,
     user: String,
     dnd_status: DndStatus,
-    event_ts: String
-) extends SlackEvent
+    event_ts: String) extends SlackEvent
 
 case class DndStatus(
     dnd_enabled: Boolean,
     next_dnd_start_ts: Long,
-    next_dnd_end_ts: Long
-)
+    next_dnd_end_ts: Long)
+
+case class SubteamMembersChanged(
+    subteam_id: String,
+    team_id: String) extends SlackEvent
+
+case class SubteamUpdated(
+    `type`: String) extends SlackEvent
+
+case class CommandsChanged(
+    event_ts: String) extends SlackEvent
+
+case class AppsChanged(
+    app: App,
+    event_ts: String
+) extends SlackEvent
+
+case class App(
+    id: String,
+    name: String)
+
+case class EmojiChanged(
+    event_ts: String) extends SlackEvent
 
 case class Pong(
     reply_to: Long,
