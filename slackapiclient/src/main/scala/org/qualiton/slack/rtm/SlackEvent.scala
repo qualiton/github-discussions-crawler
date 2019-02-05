@@ -2,7 +2,7 @@ package org.qualiton.slack.rtm
 
 package slack.models
 
-import org.qualiton.slack.models.{ Attachment2, Bot, Channel, DndStatus, Im, ReactionItem, User }
+import org.qualiton.slack.models.{ App, Attachment2, Bot, Channel, DndStatus, Im, ReactionItem, User }
 
 sealed trait SlackEvent
 
@@ -96,8 +96,7 @@ case class ChannelHistoryChanged(
 
 case class ImCreated(
     user: String,
-    channel: Im
-) extends SlackEvent
+    channel: Im) extends SlackEvent
 
 case class ImOpened(
     user: String,
@@ -241,8 +240,7 @@ case class CommandsChanged(
 
 case class AppsChanged(
     app: App,
-    event_ts: String
-) extends SlackEvent
+    event_ts: String) extends SlackEvent
 
 case class EmojiChanged(
     event_ts: String) extends SlackEvent
