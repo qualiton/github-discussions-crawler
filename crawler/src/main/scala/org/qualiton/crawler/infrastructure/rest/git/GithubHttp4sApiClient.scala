@@ -71,11 +71,8 @@ class GithubHttp4sApiClient[F[_] : Effect] private(
 
     for {
       team <- getUserTeams()
-      _ <- Stream.eval(logger.info(s"Team ${ team.name } was fetched").delay)
       discussion <- getTeamDiscussions(team.id)
-      _ <- Stream.eval(logger.info(s"Discussion ${ discussion.title } was fetched").delay)
       comments <- getTeamDiscussionComments(team.id, discussion.number)
-      _ <- Stream.eval(logger.info(s"${ comments.size } comments were fetched").delay)
       domainDiscussion <- DiscussionRestAssembler.toDomain(team, discussion, comments).stream
       filteredDomainDiscussion <- filterDiscussions(domainDiscussion)
     } yield filteredDomainDiscussion

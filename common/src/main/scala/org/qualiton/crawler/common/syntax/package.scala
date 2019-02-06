@@ -2,7 +2,7 @@ package org.qualiton.crawler
 package common
 
 import cats.effect.Sync
-import fs2.Stream
+import _root_.fs2.Stream
 
 package object syntax extends syntax.AnySyntax
 

@@ -46,7 +46,7 @@ object DefaultConfigLoader extends ConfigLoader {
             baseUrl = GithubApiClient.defaultGithubApiUrl,
             requestTimeout = 5.seconds,
             apiToken = config.Secret(githubApiToken),
-            refreshInterval = githubRefreshInterval.getOrElse(1.minute)),
+            refreshInterval = githubRefreshInterval.getOrElse(2.minutes)),
         publisherConfig =
           PublisherConfig(
             slackConfig =

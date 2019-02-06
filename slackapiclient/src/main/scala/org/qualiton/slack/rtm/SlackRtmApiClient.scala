@@ -56,7 +56,7 @@ class SlackRtmApiClient[F[_] : ConcurrentEffect : ContextShift : Timer] private(
     } yield ws
 
     program
-      .handleErrorWith(t => Stream.eval(F.delay(s"Error in ws stream, restart connection: $t")) >> through(clientPipe))
+      .handleErrorWith(t => Stream.eval(F.delay(logger.error(s"Error in ws stream, restart connection: ${ t.getMessage }", t))) >> through(clientPipe))
   }
 
   private def webSocketRequest: Stream[F, WebSocketRequest] = {

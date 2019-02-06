@@ -24,8 +24,6 @@ object Server extends LazyLogging {
   def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig])
     (implicit ec: ExecutionContext, es: ExecutorService): Stream[F, ExitCode] = {
 
-    val loggerErrorHandler: Throwable => F[Unit] = (t: Throwable) => logger.error(s"loggerErrorHandler: ${ t.getMessage }", t).delay
-
     implicit val retryPolicy = RetryPolicy[F](RetryPolicy.exponentialBackoff(2.minutes, 10), RetryPolicy.defaultRetriable)
 
     for {
@@ -33,12 +31,12 @@ object Server extends LazyLogging {
       dataSource <- DataSource.stream(config.databaseConfig, ec, ec)
       _ <- Stream.eval(FlywayUpdater(dataSource))
       discussionEventQueue <- Stream.eval(Queue.bounded[F, DiscussionEvent](100))
-      gitStream = GithubStream(discussionEventQueue, dataSource, config.gitConfig, loggerErrorHandler)
+      gitStream = GithubStream(discussionEventQueue, dataSource, config.gitConfig)
       publisherStream = PublisherStream(discussionEventQueue, config.publisherConfig)
       httpStream = HealthcheckHttpServerStream(config.httpPort)
       stream <- Stream(httpStream, gitStream.drain, publisherStream.drain)
         .parJoin(3)
-        .handleErrorWith(t => Stream.eval_(loggerErrorHandler(t)))
+        .handleErrorWith(t => Stream.eval_(logger.error(t.getMessage, t).delay))
     } yield stream
   }
 }

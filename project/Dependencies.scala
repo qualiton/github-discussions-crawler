@@ -5,7 +5,7 @@ object Dependencies extends AutoPlugin {
 
   private val CatsVersion = "1.5.0"
   private val CatsEffectVersion = "1.1.0"
-  private val Fs2Version = "1.0.2"
+  private val Fs2Version = "1.0.3"
   private val CatsMtl = "0.4.0"
   private val CirisVersion = "0.11.0"
   private val DockerTestkitVersion = "0.9.6"
