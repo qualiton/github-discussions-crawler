@@ -18,7 +18,7 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 - Targeted message delivery
 
-Both of the events extract targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\\-]+` or `#[0-9a-zA-Z_\\-]+`.
+Both of the events extract targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\-]+` or `#[0-9a-zA-Z_\-]+`.
 Targeted teams are notified directly via the team channel if the bot is added as user to the targeted channel in Slack.
 
 <a href="url"><img src="docs/github.png" aligh="left" width="850" ></a>
@@ -80,7 +80,7 @@ database:
 
 ## Running directly from the docker image
 
-The simples way to run it is to provide a `docker-compose.yaml` file and run it with `docker`
+The simples way to run it is to provide a `docker-compose.yaml` file and run it with `docker-compose up`
 
 ```yaml
 version: '2'
