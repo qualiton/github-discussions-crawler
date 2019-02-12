@@ -16,8 +16,15 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 
 <a href="url"><img src="docs/new_comments.png" aligh="left" width="500" ></a>
 
-Both of the events are extracting targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\\-]+` or `#[0-9a-zA-Z_\\-]+`.
-Targeted teams are notified directly via the team channel if the bot is added as user.
+- Targeted message delivery
+
+Both of the events extract targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\\-]+` or `#[0-9a-zA-Z_\\-]+`.
+Targeted teams are notified directly via the team channel if the bot is added as user to the targeted channel in Slack.
+
+<a href="url"><img src="docs/github.png" aligh="left" width="500" ></a>
+
+- Runs as Slack bot user
+The app uses Slack's RTM api which gives event driven capabilities to the service
 
 ## Prerequisites
 
@@ -71,6 +78,35 @@ database:
   password: PASSWORD
 ```
 
+## Running directly from the docker image
+
+The simples way to run it is to provide a `docker-compose.yaml` file and run it with `docker`
+
+```yaml
+version: '2'
+
+services:
+  postgres:
+    image: postgres:9.6-alpine
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+    - "5432:5432"
+  crawler-service:
+    image: lachatak/github-discussions-crawler:latest
+    depends_on:
+    - postgres
+    environment:
+      GITHUB_API_TOKEN: "GITHUB_API_TOKEN"
+      SLACK_API_TOKEN: "SLACK_API_TOKEN"
+      SLACK_DEFAULT_PUBLISH_CHANNEL: "gd-test"
+      DATABASE_JDBC_URL: "jdbc:postgresql://postgres:5432/postgres"
+      DATABASE_USERNAME: "postgres"
+      DATABASE_PASSWORD: "postgres"
+    ports:
+    - "9000:9000"
+```
+
 ## Uninstalling the Chart
 
 To uninstall/delete the `github-discussions-crawler` deployment:
@@ -116,9 +152,9 @@ helm upgrade pg-sqlproxy stable/gcloud-sqlproxy --namespace github-discussions-c
 ## Future improvements
 
 - Send personalised slack message to individuals and/or teams
-- Convert into a **slack bot** to be able to get team discussion stats directly into a slack room
 - Integrate with [Github Reactions Api](https://developer.github.com/v3/reactions/)
 - Add more event types like `Discussion has been closed`, `Comment body has changed`
+- Add query capabilities for stats
 
 ## Documentation
 

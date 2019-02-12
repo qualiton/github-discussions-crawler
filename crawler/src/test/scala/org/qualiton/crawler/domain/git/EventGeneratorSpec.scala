@@ -50,7 +50,7 @@ class EventGeneratorSpec
       }
     }
 
-    "should generate NewCommentsDiscoveredEvent when there is a new comments for the discussion" in forAll { (discussion: Discussion, extraComment: Comment) =>
+    "should generate NewCommentsDiscoveredEvent when there is a new comment for the discussion" in forAll { (discussion: Discussion, extraComment: Comment) =>
 
       val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(discussion), discussion.copy(comments = discussion.comments ::: List(extraComment))).unsafeRunSync()
 
