@@ -14,8 +14,7 @@ import eu.timepit.refined.auto.autoUnwrap
 import io.circe.Decoder
 import io.circe.fs2._
 import io.circe.generic.auto._
-import org.http4s.{ AuthScheme, Credentials, EntityDecoder, Header, Headers, Method, Request, Response, Uri }
-import org.http4s.circe._
+import org.http4s.{ AuthScheme, Credentials, Header, Headers, Method, Request, Response, Uri }
 import org.http4s.syntax.string._
 import org.http4s.MediaType.application.json
 import org.http4s.client.Client
@@ -26,7 +25,7 @@ import org.http4s.headers.{ Accept, Authorization, Link }
 
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
-import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 class GithubHttp4sApiClient[F[_] : Effect] private(
     client: Client[F],
@@ -85,8 +84,7 @@ class GithubHttp4sApiClient[F[_] : Effect] private(
     sendReceiveStream[TeamDiscussionResponse](prepareRequest(s"/teams/$teamId/discussions", previewAcceptHeader))
 
   private def getTeamDiscussionComments(teamId: Long, discussionId: Long): Stream[F, TeamDiscussionCommentsResponse] = {
-    implicit val teamDiscussionComments: EntityDecoder[F, TeamDiscussionCommentsResponse] = jsonOf[F, TeamDiscussionCommentsResponse]
-    Stream.eval(client.expect[TeamDiscussionCommentsResponse](prepareRequest(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)))
+    sendReceiveStream[TeamDiscussionComment](prepareRequest(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)).fold(List.empty[TeamDiscussionComment])((acc, comment) => comment :: acc)
   }
 
   def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Discussion] = {

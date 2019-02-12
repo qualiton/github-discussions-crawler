@@ -21,7 +21,7 @@ Github Discussions Crawler marries both of the worlds by publishing discussion e
 Both of the events extract targeted users and teams by scanning the message body for `@[0-9a-zA-Z_\\-]+` or `#[0-9a-zA-Z_\\-]+`.
 Targeted teams are notified directly via the team channel if the bot is added as user to the targeted channel in Slack.
 
-<a href="url"><img src="docs/github.png" aligh="left" width="500" ></a>
+<a href="url"><img src="docs/github.png" aligh="left" width="850" ></a>
 
 - Runs as Slack bot user
 The app uses Slack's RTM api which gives event driven capabilities to the service
