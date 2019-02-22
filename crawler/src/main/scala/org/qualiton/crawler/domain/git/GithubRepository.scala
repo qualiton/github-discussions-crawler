@@ -6,7 +6,7 @@ trait GithubRepository[F[_]] {
 
   def findLastUpdatedAt: F[Instant]
 
-  def find(teamId: Long, discussionId: Long): F[Option[Discussion]]
+  def find(id: TeamDiscussionId): F[Option[TeamDiscussionAggregateRoot]]
 
-  def save(discussion: Discussion): F[Unit]
+  def save(discussion: TeamDiscussionAggregateRoot): F[Unit]
 }

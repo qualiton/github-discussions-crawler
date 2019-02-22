@@ -25,7 +25,7 @@ import org.http4s.headers.{ Accept, Authorization, Link }
 
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
-import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionComment, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
+import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionCommentEntity, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
 class GithubHttp4sApiClient[F[_] : Effect] private(
     client: Client[F],
@@ -84,15 +84,15 @@ class GithubHttp4sApiClient[F[_] : Effect] private(
     sendReceiveStream[TeamDiscussionResponse](prepareRequest(s"/teams/$teamId/discussions", previewAcceptHeader))
 
   private def getTeamDiscussionComments(teamId: Long, discussionId: Long): Stream[F, TeamDiscussionCommentsResponse] = {
-    sendReceiveStream[TeamDiscussionComment](prepareRequest(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)).fold(List.empty[TeamDiscussionComment])((acc, comment) => comment :: acc)
+    sendReceiveStream[TeamDiscussionCommentEntity](prepareRequest(s"/teams/$teamId/discussions/$discussionId/comments", previewAcceptHeader)).fold(List.empty[TeamDiscussionCommentEntity])((acc, comment) => comment :: acc)
   }
 
-  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Discussion] = {
+  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, TeamDiscussionAggregateRoot] = {
 
-    def filterDiscussions(discussion: Discussion): Stream[F, Discussion] =
-      if ((discussion.updatedAt :: discussion.comments.map(_.updatedAt)).max.isAfter(instant)) {
-        logger.info(s"New item found in ${ discussion.teamName } -> ${ discussion.title }")
-        Stream.emit(discussion)
+    def filterDiscussions(teamDiscussionAggregateRoot: TeamDiscussionAggregateRoot): Stream[F, TeamDiscussionAggregateRoot] =
+      if (teamDiscussionAggregateRoot.lastUpdated.isAfter(instant)) {
+        logger.info(s"New item found in ${ teamDiscussionAggregateRoot.team.name } -> ${ teamDiscussionAggregateRoot.discussion.title }")
+        Stream.emit(teamDiscussionAggregateRoot)
       } else {
         Stream.empty.covary
       }
@@ -111,24 +111,27 @@ object GithubHttp4sApiClient {
 
   final case class UserTeamResponse(
       id: Long,
-      name: String)
+      name: String,
+      description: String,
+      created_at: Instant,
+      updated_at: Instant)
 
-  final case class Author(login: String, avatar_url: String)
+  final case class AuthorEntity(id: Long, login: String, avatar_url: String)
 
   final case class TeamDiscussionResponse(
       title: String,
       number: Long,
-      author: Author,
+      author: AuthorEntity,
       body: String,
       body_version: String,
       html_url: String,
       created_at: Instant,
       updated_at: Instant)
 
-  type TeamDiscussionCommentsResponse = List[TeamDiscussionComment]
+  type TeamDiscussionCommentsResponse = List[TeamDiscussionCommentEntity]
 
-  final case class TeamDiscussionComment(
-      author: Author,
+  final case class TeamDiscussionCommentEntity(
+      author: AuthorEntity,
       number: Long,
       body: String,
       body_version: String,

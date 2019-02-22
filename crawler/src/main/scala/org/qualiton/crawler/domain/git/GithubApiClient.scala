@@ -10,7 +10,7 @@ import eu.timepit.refined.string.Url
 
 trait GithubApiClient[F[_]] {
 
-  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, Discussion]
+  def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, TeamDiscussionAggregateRoot]
 }
 
 object GithubApiClient {

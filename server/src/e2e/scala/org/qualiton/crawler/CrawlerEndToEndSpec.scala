@@ -1,18 +1,21 @@
 package org.qualiton.crawler
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 
 import scala.concurrent.duration._
 
-import _root_.cats.syntax.flatMap._
-import _root_.cats.syntax.functor._
+import cats.data.{ NonEmptyList, OptionT }
 import cats.effect.{ ContextShift, IO }
 import cats.scalatest.{ EitherMatchers, ValidatedValues }
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import fs2.concurrent.SignallingRef
 
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
+import doobie.util.query.Query0
 import doobie.util.transactor.Transactor
 import eu.timepit.refined._
 import eu.timepit.refined.auto._
@@ -30,7 +33,7 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 import org.qualiton.crawler.common.config
 import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig, SlackConfig }
 import org.qualiton.crawler.common.datasource.DataSource
-import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ CommentPersistence, CommentsListPersistence, DiscussionPersistence }
+import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ AuthorPersistence, CommentPersistence, DiscussionAggregateRootPersistence, DiscussionPersistence, TeamPersistence }
 import org.qualiton.crawler.server.config.ServiceConfig
 import org.qualiton.crawler.server.main.Server
 import org.qualiton.crawler.testsupport.dockerkit.PostgresDockerTestKit
@@ -133,19 +136,33 @@ class CrawlerEndToEndSpec
 
       Then("new discussion is persisted to db")
       eventually {
-        val result = findDiscussionBy(teamId1, discussionId1)
+        val result = findDiscussionAggregateRootPersistence(teamId1, discussionId1)
 
         inside(result) {
-          case Some(DiscussionPersistence(teamId, teamName, discussionId, title, author, avatarUrl, body, _, discussionUrl, CommentsListPersistence(comments), _, _)) =>
+          case Some(DiscussionAggregateRootPersistence(
+          t@TeamPersistence(teamId, teamName, description, _, _),
+          d@DiscussionPersistence(_, discussionId, title, _, _),
+          NonEmptyList(c@CommentPersistence(_, _, commentId0, AuthorPersistence(authorId0, authorName0, authorAvatarUrl0), url0, body0, bodyVersion0, _, _), _))) =>
             teamId should ===(teamId1)
             teamName should ===("Test Team")
+            description should ===("Boost team")
+            t.createdAt.toString should ===("2017-05-10T14:04:30Z")
+            t.updatedAt.toString should ===("2018-06-11T16:10:11Z")
+
             discussionId should ===(discussionId1)
             title should ===(s"discussion-title-$discussionId1")
-            author should ===("lachatak")
-            avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            body should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
-            discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
-            comments should have size 0L
+            d.createdAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+            d.updatedAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+
+            commentId0 should ===(0L)
+            authorId0 should ===(5830214L)
+            authorName0 should ===("lachatak")
+            authorAvatarUrl0 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            url0 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+            body0 should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
+            bodyVersion0 should ===("76bc8de0a4e713e15fecba89143ac2af")
+            c.createdAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+            c.updatedAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
         }
       }
 
@@ -228,36 +245,59 @@ class CrawlerEndToEndSpec
 
       Then("new discussion is persisted to db")
       eventually {
-        val result = findDiscussionBy(teamId1, discussionId1)
+        val result = findDiscussionAggregateRootPersistence(teamId1, discussionId1)
 
         inside(result) {
-          case Some(DiscussionPersistence(
-          teamId, teamName, discussionId, title, author, avatarUrl, body, _, discussionUrl,
-          c@CommentsListPersistence(List(
-          CommentPersistence(commentId2, commentAuthor2, commentAuthorAvatar2, commentBody2, _, commentUrl2, _, _),
-          CommentPersistence(commentId1, commentAuthor1, commentAuthorAvatar1, commentBody1, _, commentUrl1, _, _))),
-          _, _)) =>
+          case Some(DiscussionAggregateRootPersistence(
+          t@TeamPersistence(teamId, teamName, description, _, _),
+          d@DiscussionPersistence(_, discussionId, title, _, _),
+          NonEmptyList(
+          h@CommentPersistence(_, _, commentId0, AuthorPersistence(authorId0, authorName0, authorAvatarUrl0), url0, body0, bodyVersion0, _, _),
+          List(
+          ta1@CommentPersistence(_, _, commentId1, AuthorPersistence(authorId1, authorName1, authorAvatarUrl1), url1, body1, bodyVersion1, _, _),
+          ta2@CommentPersistence(_, _, commentId2, AuthorPersistence(authorId2, authorName2, authorAvatarUrl2), url2, body2, bodyVersion2, _, _))))) =>
             teamId should ===(teamId1)
             teamName should ===("Test Team")
+            description should ===("Boost team")
+            t.createdAt.toString should ===("2017-05-10T14:04:30Z")
+            t.updatedAt.toString should ===("2018-06-11T16:10:11Z")
+
             discussionId should ===(discussionId1)
             title should ===(s"discussion-title-$discussionId1")
-            author should ===("lachatak")
-            avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            body should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
-            discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
-            c.comments should have size 2L
+            d.createdAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+            d.updatedAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
 
-            commentId2 should ===(commentId2)
-            commentAuthor2 should ===("lachatak")
-            commentAuthorAvatar2 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            commentBody2 should ===(s"comment-body-$commentId2 @targeted-person-$commentId2 #targeted-channel-$commentId2")
-            commentUrl2 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId2")
+            commentId0 should ===(0L)
+            authorId0 should ===(5830214L)
+            authorName0 should ===("lachatak")
+            authorAvatarUrl0 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            url0 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+            body0 should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
+            bodyVersion0 should ===("76bc8de0a4e713e15fecba89143ac2af")
+            h.createdAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+            h.updatedAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
 
             commentId1 should ===(commentId1)
-            commentAuthor1 should ===("lachatak")
-            commentAuthorAvatar1 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            commentBody1 should ===(s"comment-body-$commentId1 @targeted-person-$commentId1 #targeted-channel-$commentId1")
-            commentUrl1 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId1")
+            authorId1 should ===(5830214L)
+            authorName1 should ===("lachatak")
+            authorAvatarUrl1 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            url1 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId1")
+            body1 should ===(s"comment-body-$commentId1 @targeted-person-$commentId1 #targeted-channel-$commentId1")
+            bodyVersion1 should ===("abf55d3127759d1716fc9d1be3c9237c")
+            ta1.createdAt should ===(referenceInstant.plus(2, ChronoUnit.HOURS))
+            ta1.updatedAt should ===(referenceInstant.plus(2, ChronoUnit.HOURS))
+
+            commentId2 should ===(commentId2)
+            authorId2 should ===(5830214L)
+            authorName2 should ===("lachatak")
+            authorAvatarUrl2 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            url2 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId2")
+            body2 should ===(s"comment-body-$commentId2 @targeted-person-$commentId2 #targeted-channel-$commentId2")
+            bodyVersion2 should ===("abf55d3127759d1716fc9d1be3c9237c")
+            ta2.createdAt should ===(referenceInstant.plus(3, ChronoUnit.HOURS))
+            ta2.updatedAt should ===(referenceInstant.plus(3, ChronoUnit.HOURS))
+
+
         }
       }
 
@@ -345,40 +385,56 @@ class CrawlerEndToEndSpec
       slackApiMockServer.mockRtmConnect()
       slackApiMockServer.mockChatPostMessage()
       val firstUpdatedAt: Instant = eventually {
-        val result = findDiscussionBy(teamId1, discussionId1)
-        result.value.updatedAt
+        val result = findDiscussionAggregateRootPersistence(teamId1, discussionId1)
+        result.value.discussion.updatedAt
       }
 
+      println(firstUpdatedAt)
       Then("a new comment is discovered")
       githubApiV3MockServer.mockDiscussions(teamId1, 1, 1, referenceInstant)
 
       Then("the new comment is persisted to db")
       eventually {
-        val result = findDiscussionBy(teamId1, discussionId1)
+        val result = findDiscussionAggregateRootPersistence(teamId1, discussionId1)
 
         inside(result) {
-          case Some(DiscussionPersistence(
-          teamId, teamName, discussionId, title, author, avatarUrl, body, _, discussionUrl,
-          c@CommentsListPersistence(List(
-          CommentPersistence(commentId, commentAuthor, commentAuthorAvatar, commentBody, _, commentUrl, _, commentLatestUpdatedAt))),
-          _, latestUpdatedAt)) =>
+          case Some(DiscussionAggregateRootPersistence(
+          t@TeamPersistence(teamId, teamName, description, _, _),
+          d@DiscussionPersistence(_, discussionId, title, _, _),
+          NonEmptyList(
+          h@CommentPersistence(_, _, commentId0, AuthorPersistence(authorId0, authorName0, authorAvatarUrl0), url0, body0, bodyVersion0, _, _),
+          List(
+          ta1@CommentPersistence(_, _, commentId1, AuthorPersistence(authorId1, authorName1, authorAvatarUrl1), url1, body1, bodyVersion1, _, _))))) =>
             teamId should ===(teamId1)
             teamName should ===("Test Team")
+            description should ===("Boost team")
+            t.createdAt.toString should ===("2017-05-10T14:04:30Z")
+            t.updatedAt.toString should ===("2018-06-11T16:10:11Z")
+
             discussionId should ===(discussionId1)
             title should ===(s"discussion-title-$discussionId1")
-            author should ===("lachatak")
-            avatarUrl should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            body should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
-            discussionUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
-            c.comments should have size 1L
-            latestUpdatedAt isAfter firstUpdatedAt
-            commentLatestUpdatedAt isAfter firstUpdatedAt
+            d.createdAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+            d.updatedAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
 
-            commentId should ===(commentId)
-            commentAuthor should ===("lachatak")
-            commentAuthorAvatar should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
-            commentBody should ===(s"comment-body-$commentId @targeted-person-$commentId #targeted-channel-$commentId")
-            commentUrl should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId")
+            commentId0 should ===(0L)
+            authorId0 should ===(5830214L)
+            authorName0 should ===("lachatak")
+            authorAvatarUrl0 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            url0 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1")
+            body0 should ===(s"discussion-body-$discussionId1 @targeted-person-$discussionId1 #targeted-channel-$discussionId1")
+            bodyVersion0 should ===("76bc8de0a4e713e15fecba89143ac2af")
+            h.createdAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+            h.updatedAt should ===(referenceInstant.plus(1, ChronoUnit.HOURS))
+
+            commentId1 should ===(commentId1)
+            authorId1 should ===(5830214L)
+            authorName1 should ===("lachatak")
+            authorAvatarUrl1 should ===("https://avatars0.githubusercontent.com/u/5830214?v=4")
+            url1 should ===(s"https://github.com/orgs/ovotech/teams/test-team/discussions/$discussionId1/comments/$commentId1")
+            body1 should ===(s"comment-body-$commentId1 @targeted-person-$commentId1 #targeted-channel-$commentId1")
+            bodyVersion1 should ===("abf55d3127759d1716fc9d1be3c9237c")
+            ta1.createdAt should ===(referenceInstant.plus(2, ChronoUnit.HOURS))
+            ta1.updatedAt should ===(referenceInstant.plus(2, ChronoUnit.HOURS))
         }
       }
 
@@ -468,14 +524,41 @@ class CrawlerEndToEndSpec
   }
 
   def resetTables(): Unit = {
-    logger.warn("Reset discussion table before next test!")
-    sql"TRUNCATE TABLE discussion".update.run.transact(transactor).void.unsafeRunSync()
+    logger.warn("Reset tables before next test!")
+    (sql"TRUNCATE TABLE team CASCADE".update.run >> sql"TRUNCATE TABLE author CASCADE".update.run).transact(transactor).void.unsafeRunSync()
   }
 
-  def findDiscussionBy(teamId: Long, discussionId: Long): Option[DiscussionPersistence] =
+  def findDiscussionAggregateRootPersistence(teamId: Long, discussionId: Long): Option[DiscussionAggregateRootPersistence] = {
+    val program: OptionT[doobie.ConnectionIO, DiscussionAggregateRootPersistence] = for {
+      team <- OptionT(findTeamQuery(teamId).option)
+      discussion <- OptionT(findDiscussionQuery(teamId, discussionId).option)
+      comments <- OptionT.liftF(findCommentQuery(teamId, discussionId).nel)
+    } yield DiscussionAggregateRootPersistence(team, discussion, comments)
+
+    program.value.transact(transactor).unsafeRunSync()
+  }
+
+  def findTeamQuery(teamId: Long): Query0[TeamPersistence] =
     sql"""
-      SELECT team_id, team_name, discussion_id, title, author, avatar_url, body, body_version, discussion_url, comments, created_at, updated_at
-      FROM discussion
-      WHERE team_id = $teamId AND discussion_id = $discussionId""".query[DiscussionPersistence].option.transact(transactor).unsafeRunSync()
+          SELECT id, name, description, created_at, updated_at
+          FROM team
+          WHERE id = $teamId
+      """.query[TeamPersistence]
+
+  def findDiscussionQuery(teamId: Long, discussionId: Long): Query0[DiscussionPersistence] =
+    sql"""
+          SELECT team_id, discussion_id, title, created_at, updated_at
+          FROM discussion
+          WHERE team_id = $teamId AND discussion_id = $discussionId
+      """.query[DiscussionPersistence]
+
+  def findCommentQuery(teamId: Long, discussionId: Long): Query0[CommentPersistence] =
+    sql"""
+          SELECT c.team_id, c.discussion_id, c.comment_id, a.id, a.name, a.url, c.url, c.body, c.body_version, c.created_at, c.updated_at
+          FROM comment c
+          JOIN author a ON a.id = c.author_id
+          WHERE c.team_id = $teamId AND c.discussion_id = $discussionId
+      """.query[CommentPersistence]
+
 }
 

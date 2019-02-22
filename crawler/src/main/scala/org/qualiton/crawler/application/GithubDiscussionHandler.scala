@@ -22,7 +22,7 @@ class GithubDiscussionHandler[F[_] : Effect] private(
       lastUpdatedAt <- githubRepository.findLastUpdatedAt.stream
       _ <- logger.info(s"Synchronizing discussions updated after $lastUpdatedAt").delay.stream
       currentDiscussion <- githubClient.getTeamDiscussionsUpdatedAfter(lastUpdatedAt)
-      maybePreviousDiscussion <- githubRepository.find(currentDiscussion.teamId, currentDiscussion.discussionId).stream
+      maybePreviousDiscussion <- githubRepository.find(currentDiscussion.id).stream
       maybeEvent <- EventGenerator.generateEvent(maybePreviousDiscussion, currentDiscussion).stream
       _ <- githubRepository.save(currentDiscussion).stream
       _ <- maybeEvent.traverse(eventQueue.enqueue1).stream

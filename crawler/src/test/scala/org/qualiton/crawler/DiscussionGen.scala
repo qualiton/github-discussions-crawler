@@ -2,11 +2,11 @@ package org.qualiton.crawler
 
 import org.scalacheck.{ Arbitrary, Gen }
 
-import org.qualiton.crawler.domain.git.Discussion
+import org.qualiton.crawler.domain.git.TeamDiscussionAggregateRoot
 
 trait DiscussionGen extends GenSupport {
 
-  val discussionGen: Gen[Discussion] = arbitrary[Discussion]
+  val discussionGen: Gen[TeamDiscussionAggregateRoot] = arbitrary[TeamDiscussionAggregateRoot]
 
-  implicit val arbDiscussion: Arbitrary[Discussion] = Arbitrary(discussionGen)
+  implicit val arbDiscussion: Arbitrary[TeamDiscussionAggregateRoot] = Arbitrary(discussionGen)
 }

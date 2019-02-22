@@ -3,6 +3,8 @@ package org.qualiton.crawler.domain.git
 import cats.data.NonEmptyList
 import cats.effect.IO
 
+import monocle.macros.syntax.lens._
+
 import org.qualiton.crawler.common.testsupport.FreeSpecSupport
 import org.qualiton.crawler.GenSupport
 import org.qualiton.crawler.domain.core.{ DiscussionEvent, NewComment, NewCommentsDiscoveredEvent, NewDiscussionDiscoveredEvent }
@@ -12,60 +14,62 @@ class EventGeneratorSpec
     with GenSupport {
 
   "EventGenerator" - {
-    "should generate NewDiscussionDiscoveredEvent when a new discussion is discovered" in forAll { discussion: Discussion =>
+    "should generate NewDiscussionDiscoveredEvent when a new discussion is discovered" in forAll { currentTeamDiscussionAggregateRoot: TeamDiscussionAggregateRoot =>
 
-      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](None, discussion).unsafeRunSync()
+      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](None, currentTeamDiscussionAggregateRoot).unsafeRunSync()
 
       inside(result) {
         case Some(NewDiscussionDiscoveredEvent(teamName, title, author, avatarUrl, discussionUrl, totalCommentsCount, targeted, createdAt)) =>
-          teamName.value should ===(discussion.teamName.value)
-          title.value should ===(discussion.title.value)
-          author.value should ===(discussion.author.value)
-          avatarUrl.value should ===(discussion.avatarUrl.value)
-          discussionUrl.value should ===(discussion.discussionUrl.value)
-          totalCommentsCount should ===(discussion.comments.size)
-          targeted.persons should have size discussion.targetedPerson.size.toLong
-          targeted.teams should have size discussion.targetedTeam.size.toLong
-          createdAt should ===(discussion.updatedAt)
+          teamName.value should ===(currentTeamDiscussionAggregateRoot.team.name.value)
+          title.value should ===(currentTeamDiscussionAggregateRoot.discussion.title.value)
+          author.value should ===(currentTeamDiscussionAggregateRoot.initialComment.author.name.value)
+          avatarUrl.value should ===(currentTeamDiscussionAggregateRoot.initialComment.author.avatarUrl.value)
+          discussionUrl.value should ===(currentTeamDiscussionAggregateRoot.initialComment.url.value)
+          totalCommentsCount should ===(currentTeamDiscussionAggregateRoot.totalCommentsCount)
+          targeted.persons should have size currentTeamDiscussionAggregateRoot.initialComment.targetedPerson.size.toLong
+          targeted.teams should have size currentTeamDiscussionAggregateRoot.initialComment.targetedTeam.size.toLong
+          createdAt should ===(currentTeamDiscussionAggregateRoot.discussion.createdAt)
       }
     }
 
-    "should not generate event when there is no change in the discussion" in forAll { discussion: Discussion =>
+    "should not generate event when there is no change in the discussion" in forAll { teamDiscussionAggregateRoot: TeamDiscussionAggregateRoot =>
 
-      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(discussion), discussion).unsafeRunSync()
+      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(teamDiscussionAggregateRoot), teamDiscussionAggregateRoot).unsafeRunSync()
 
       result shouldBe None
     }
 
-    "should generate NewCommentsDiscoveredEvent when there are new comments for the discussion" in forAll { (discussion: Discussion, extraComments: NonEmptyList[Comment]) =>
+    "should generate NewCommentsDiscoveredEvent when there are new comments for the discussion" in forAll { (previousTeamDiscussionAggregateRoot: TeamDiscussionAggregateRoot, extraComments: NonEmptyList[Comment]) =>
 
-      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(discussion), discussion.copy(comments = discussion.comments ::: extraComments.toList)).unsafeRunSync()
+      val currentTeamDiscussionAggregateRoot = previousTeamDiscussionAggregateRoot.lens(_.discussion.comments).modify(_ ::: extraComments)
+      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(previousTeamDiscussionAggregateRoot), currentTeamDiscussionAggregateRoot).unsafeRunSync()
 
       inside(result) {
-        case Some(NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, newComments, createdAt)) =>
-          teamName.value should ===(discussion.teamName.value)
-          title.value should ===(discussion.title.value)
-          totalCommentsCount should ===(discussion.comments.size + newComments.size)
-          createdAt should ===(extraComments.map(_.updatedAt).toList.max)
+        case Some(n@NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, _)) =>
+          teamName.value should ===(currentTeamDiscussionAggregateRoot.team.name.value)
+          title.value should ===(currentTeamDiscussionAggregateRoot.discussion.title.value)
+          totalCommentsCount should ===(currentTeamDiscussionAggregateRoot.totalCommentsCount)
+          n.createdAt should ===(extraComments.map(_.createdAt).toList.max)
       }
     }
 
-    "should generate NewCommentsDiscoveredEvent when there is a new comment for the discussion" in forAll { (discussion: Discussion, extraComment: Comment) =>
+    "should generate NewCommentsDiscoveredEvent when there is a new comment for the discussion" in forAll { (previousTeamDiscussionAggregateRoot: TeamDiscussionAggregateRoot, extraComment: Comment) =>
 
-      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(discussion), discussion.copy(comments = discussion.comments ::: List(extraComment))).unsafeRunSync()
+      val currentTeamDiscussionAggregateRoot = previousTeamDiscussionAggregateRoot.lens(_.discussion.comments).modify(_ :+ extraComment)
+      val result: Option[DiscussionEvent] = EventGenerator.generateEvent[IO](Some(previousTeamDiscussionAggregateRoot), currentTeamDiscussionAggregateRoot).unsafeRunSync()
 
       inside(result) {
-        case Some(NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, NonEmptyList(NewComment(author, avatarUrl, commentUrl, targeted, updatedAt), _), createdAt)) =>
-          teamName.value should ===(discussion.teamName.value)
-          title.value should ===(discussion.title.value)
-          totalCommentsCount should ===(discussion.comments.size + 1)
-          author.value should ===(extraComment.author.value)
-          avatarUrl.value should ===(extraComment.avatarUrl.value)
-          commentUrl.value should ===(extraComment.commentUrl.value)
+        case Some(n@NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, NonEmptyList(NewComment(authorName, avatarUrl, commentUrl, targeted, createdAt), _))) =>
+          teamName.value should ===(currentTeamDiscussionAggregateRoot.team.name.value)
+          title.value should ===(currentTeamDiscussionAggregateRoot.discussion.title.value)
+          totalCommentsCount should ===(currentTeamDiscussionAggregateRoot.totalCommentsCount)
+          authorName.value should ===(extraComment.author.name.value)
+          avatarUrl.value should ===(extraComment.author.avatarUrl.value)
+          commentUrl.value should ===(extraComment.url.value)
           targeted.persons should have size extraComment.targetedPerson.size.toLong
           targeted.teams should have size extraComment.targetedTeam.size.toLong
-          updatedAt should ===(extraComment.updatedAt)
-          createdAt should ===(extraComment.updatedAt)
+          createdAt should ===(extraComment.createdAt)
+          n.createdAt should ===(extraComment.createdAt)
       }
     }
   }

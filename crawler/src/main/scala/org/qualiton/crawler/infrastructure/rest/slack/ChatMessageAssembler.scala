@@ -27,7 +27,7 @@ object ChatMessageAssembler {
             (if (!targeted.isEmpty) List(Field("Targeted", (targeted.persons.map(_.value).toList.sorted ::: targeted.teams.map(_.value).toList.sorted).distinct.mkString(", "), false)) else List.empty),
           ts = createdAt.getEpochSecond)))
 
-    case n@NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, newComments, createdAt) =>
+    case n@NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, newComments) =>
 
       val targeted: List[String] = n.targeted.persons.map(_.value).toList ::: n.targeted.teams.map(_.value).toList
       val pretext = if (newComments.size == 1) "New comment has been discovered" else s"${ newComments.size } new comments have been discovered"
@@ -37,7 +37,7 @@ object ChatMessageAssembler {
         List(Attachment(
           pretext = pretext,
           color = "good",
-          author_name = newComments.map(_.author.value).toList.toSet.mkString(", "),
+          author_name = newComments.last.authorName,
           author_icon = newComments.last.avatarUrl,
           title = title,
           title_link = newComments.last.commentUrl,
@@ -46,6 +46,6 @@ object ChatMessageAssembler {
               Field("Team", teamName, true),
               Field("Comments", totalCommentsCount.toString, true)) :::
             (if (targeted.nonEmpty) List(Field("Targeted", targeted.mkString(", "), false)) else List.empty),
-          ts = createdAt.getEpochSecond)))
+          ts = n.createdAt.getEpochSecond)))
   }
 }

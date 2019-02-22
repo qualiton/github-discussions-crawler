@@ -31,19 +31,20 @@ package core {
   final case class NewDiscussionDiscoveredEvent(
       teamName: NonEmptyString,
       title: NonEmptyString,
-      author: NonEmptyString,
+      authorName: NonEmptyString,
       avatarUrl: Url,
       discussionUrl: Url,
       totalCommentsCount: Int,
       targeted: Targeted,
-      override val createdAt: Instant) extends DiscussionEvent
+      createdAt: Instant) extends DiscussionEvent
 
   final case class NewCommentsDiscoveredEvent(
       teamName: NonEmptyString,
       title: NonEmptyString,
       totalCommentsCount: Int,
-      newComments: NonEmptyList[NewComment],
-      override val createdAt: Instant) extends DiscussionEvent {
+      newComments: NonEmptyList[NewComment]) extends DiscussionEvent {
+
+    val createdAt = newComments.map(_.createdAt).toList.max
 
     val targeted: Targeted =
       Targeted(
@@ -52,11 +53,11 @@ package core {
   }
 
   final case class NewComment(
-      author: NonEmptyString,
+      authorName: NonEmptyString,
       avatarUrl: Url,
       commentUrl: Url,
       targeted: Targeted,
-      updatedAt: Instant)
+      createdAt: Instant)
 
   final case class Targeted(
       persons: Set[TargetedPerson],
