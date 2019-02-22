@@ -78,8 +78,7 @@ class ChatMessageAssemblerSpec
         val expectedTotalCommentsCount = totalCommentsCount.value.toString
         inside(result) {
           case ChatMessage(
-          None, List(Attachment(
-          pretext, color, author_name, author_icon, title, title_link,
+          None, List(Attachment(pretext, color, author_name, author_icon, title, title_link,
           Field("Team", `expectedTeamName`, true) :: Field("Comments", `expectedTotalCommentsCount`, true) :: Field("Targeted", targeted, false) :: Nil, ts))) =>
 
             pretext should ===(s"New discussion has been discovered with ${ totalCommentsCount.value } comments")
@@ -107,40 +106,69 @@ class ChatMessageAssemblerSpec
         val expectedTeamName = newCommentsDiscoveredEventWithComments.teamName.value
         val expectedTotalCommentsCount = newCommentsDiscoveredEventWithComments.totalCommentsCount.toString
         inside(result) {
-          case ChatMessage(None, List(Attachment(pretext, color, author_name, author_icon, title, title_link, Field("Team", `expectedTeamName`, true) :: Field("Comments", `expectedTotalCommentsCount`, true) :: Nil, ts))) =>
+          case ChatMessage(
+          None, List(Attachment(pretext, color, author_name, author_icon, title, title_link, Field("Team", `expectedTeamName`, true) :: Field("Comments", `expectedTotalCommentsCount`, true) :: Nil, ts))) =>
+
             pretext should ===("New comment has been discovered")
             color should ===("good")
             author_name should ===(comment.authorName.value)
             author_icon should ===(comment.avatarUrl.value)
             title should ===(newCommentsDiscoveredEvent.title.value)
             title_link should ===(comment.commentUrl.value)
-            ts should ===(comment.createdAt.getEpochSecond)
+            ts should ===(newCommentsDiscoveredEventWithComments.createdAt.getEpochSecond)
         }
       }
 
-//      "should be generated with more than 1 new comment and empty targets" in {
-//        forAll { (newCommentsDiscoveredEvent: NewCommentsDiscoveredEvent, comment: NewComment, totalCommentsCount: Int Refined Greater[W.`0`.T]) =>
-//
-//          val newModifiedCommment = comment.copy(targeted = Targeted(Set(), Set()))
-//          val newCommentsDiscoveredEventWithComments =
-//            newCommentsDiscoveredEvent
-//              .copy(newComments = NonEmptyList.of(newModifiedCommment, List.fill(totalCommentsCount.value)(newModifiedCommment): _*))
-//
-//          val result: ChatMessage = ChatMessageAssembler.fromDomain(newCommentsDiscoveredEventWithComments)
-//
-//          val expectedTeamName = newCommentsDiscoveredEventWithComments.teamName.value
-//          val expectedTotalCommentsCount = newCommentsDiscoveredEventWithComments.totalCommentsCount.toString
-//          inside(result) {
-//            case ChatMessage(None, List(Attachment(pretext, color, author_name, author_icon, title, title_link, Field("Team", `expectedTeamName`, true) :: Field("Comments", `expectedTotalCommentsCount`, true) :: Nil, ts))) =>
-//              pretext should ===(s"${ newCommentsDiscoveredEventWithComments.newComments.size } new comments have been discovered")
-//              color should ===("good")
-//              author_name should ===(comment.authorName.value)
-//              author_icon should ===(comment.avatarUrl.value)
-//              title should ===(newCommentsDiscoveredEvent.title.value)
-//              title_link should ===(comment.commentUrl.value)
-//              ts should ===(comment.createdAt.getEpochSecond)
-//          }
-//        }
-//      }
+      "should be generated with more than 1 new comment and empty targets" in {
+        forAll { (newCommentsDiscoveredEvent: NewCommentsDiscoveredEvent, comment: NewComment, comments: NonEmptyList[NewComment]) =>
+
+          val newCommentsDiscoveredEventWithComments =
+            newCommentsDiscoveredEvent
+              .copy(newComments = (comments :+ comment).map(_.copy(targeted = Targeted(Set(), Set()))))
+
+          val result: ChatMessage = ChatMessageAssembler.fromDomain(newCommentsDiscoveredEventWithComments)
+
+          val expectedTeamName = newCommentsDiscoveredEventWithComments.teamName.value
+          val expectedTotalCommentsCount = newCommentsDiscoveredEventWithComments.totalCommentsCount.toString
+          inside(result) {
+            case ChatMessage(None, List(Attachment(pretext, color, author_name, author_icon, title, title_link, Field("Team", `expectedTeamName`, true) :: Field("Comments", `expectedTotalCommentsCount`, true) :: Nil, ts))) =>
+              pretext should ===(s"${ newCommentsDiscoveredEventWithComments.newComments.size } new comments have been discovered")
+              color should ===("good")
+              author_name should ===(comment.authorName.value)
+              author_icon should ===(comment.avatarUrl.value)
+              title should ===(newCommentsDiscoveredEvent.title.value)
+              title_link should ===(comment.commentUrl.value)
+              ts should ===(newCommentsDiscoveredEventWithComments.createdAt.getEpochSecond)
+          }
+        }
+      }
+
+      "should be generated with more than 1 new comment and more targets" in {
+        forAll { (newCommentsDiscoveredEvent: NewCommentsDiscoveredEvent, comment: NewComment, comments: NonEmptyList[NewComment], targetedPersons: NonEmptyList[TargetedPerson], targetedTeams: NonEmptyList[TargetedTeam]) =>
+
+          val newCommentsDiscoveredEventWithComments =
+            newCommentsDiscoveredEvent
+              .copy(newComments = (comments.map(_.copy(targeted = Targeted(Set(), Set()))) :+ comment.copy(targeted = Targeted(targetedPersons.toList.toSet, targetedTeams.toList.toSet))))
+
+          val result: ChatMessage = ChatMessageAssembler.fromDomain(newCommentsDiscoveredEventWithComments)
+
+          val expectedTeamName = newCommentsDiscoveredEventWithComments.teamName.value
+          val expectedTotalCommentsCount = newCommentsDiscoveredEventWithComments.totalCommentsCount.toString
+          inside(result) {
+            case ChatMessage(
+            None, List(Attachment(pretext, color, author_name, author_icon, title, title_link,
+            Field("Team", `expectedTeamName`, true) :: Field("Comments", `expectedTotalCommentsCount`, true) :: Field("Targeted", targeted, false) :: Nil, ts))) =>
+
+              pretext should ===(s"${ newCommentsDiscoveredEventWithComments.newComments.size } new comments have been discovered")
+              color should ===("good")
+              author_name should ===(comment.authorName.value)
+              author_icon should ===(comment.avatarUrl.value)
+              title should ===(newCommentsDiscoveredEvent.title.value)
+              title_link should ===(comment.commentUrl.value)
+              targeted should ===((targetedPersons.map(_.value).toList.sorted ::: targetedTeams.map(_.value).toList.sorted).distinct.mkString(", "))
+              ts should ===(newCommentsDiscoveredEventWithComments.createdAt.getEpochSecond)
+          }
+        }
+      }
     }
 }

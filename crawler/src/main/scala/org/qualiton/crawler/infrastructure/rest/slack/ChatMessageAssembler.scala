@@ -29,7 +29,7 @@ object ChatMessageAssembler {
 
     case n@NewCommentsDiscoveredEvent(teamName, title, totalCommentsCount, newComments) =>
 
-      val targeted: List[String] = n.targeted.persons.map(_.value).toList ::: n.targeted.teams.map(_.value).toList
+      val targeted: List[String] = (n.targeted.persons.map(_.value).toList.sorted ::: n.targeted.teams.map(_.value).toList.sorted).distinct
       val pretext = if (newComments.size == 1) "New comment has been discovered" else s"${ newComments.size } new comments have been discovered"
 
       ChatMessage(

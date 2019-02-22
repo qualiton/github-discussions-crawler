@@ -61,7 +61,7 @@ object DiscussionRestAssembler {
       .toEither match {
       case Right(a) => a.pure[F]
       case Left(e) =>
-        Sync[F].raiseError(ValidationError("Cannot assemble discussion!", e.toList))
+        Sync[F].raiseError(ValidationError(s"Cannot assemble discussion: $e", e.toList))
     }
   }
 
