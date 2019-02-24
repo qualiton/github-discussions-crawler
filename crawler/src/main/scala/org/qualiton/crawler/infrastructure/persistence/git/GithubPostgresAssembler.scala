@@ -78,7 +78,7 @@ object GithubPostgresAssembler {
 
     val authorIdValidated: ValidatedNel[ValidationError, Id] = refineV[NonNegative](author.id).leftMap(e => ValidationError("authorId:" + e)).toValidatedNel
     val authorNameValidated: ValidatedNel[ValidationError, NonEmptyString] = refineV[NonEmpty](author.name).leftMap(e => ValidationError("authorName:" + e)).toValidatedNel
-    val authorUrlValidated: ValidatedNel[ValidationError, Url] = refineV[RefinedUrl](author.url).leftMap(e => ValidationError("authorUrl:" + e)).toValidatedNel
+    val authorUrlValidated: ValidatedNel[ValidationError, Url] = refineV[RefinedUrl](author.avatarUrl).leftMap(e => ValidationError("authorUrl:" + e)).toValidatedNel
 
     val idValidated: ValidatedNel[ValidationError, Id] = refineV[NonNegative](commentId).leftMap(e => ValidationError("commentId:" + e)).toValidatedNel
     val urlValidated: ValidatedNel[ValidationError, Url] = refineV[RefinedUrl](url).leftMap(e => ValidationError("commentUrl:" + e)).toValidatedNel

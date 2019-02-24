@@ -554,7 +554,7 @@ class CrawlerEndToEndSpec
 
   def findCommentQuery(teamId: Long, discussionId: Long): Query0[CommentPersistence] =
     sql"""
-          SELECT c.team_id, c.discussion_id, c.comment_id, a.id, a.name, a.url, c.url, c.body, c.body_version, c.created_at, c.updated_at
+          SELECT c.team_id, c.discussion_id, c.comment_id, a.id, a.name, a.avatar_url, c.url, c.body, c.body_version, c.created_at, c.updated_at
           FROM comment c
           JOIN author a ON a.id = c.author_id
           WHERE c.team_id = $teamId AND c.discussion_id = $discussionId

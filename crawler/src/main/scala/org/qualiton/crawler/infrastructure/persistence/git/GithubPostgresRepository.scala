@@ -80,7 +80,7 @@ object GithubPostgresRepository {
   final case class AuthorPersistence(
       id: Long,
       name: String,
-      url: String)
+      avatarUrl: String)
 
   final case class CommentPersistence(
       teamId: Long,
@@ -112,12 +112,12 @@ object GithubPostgresRepository {
   def insertAuthorUpdate(authorPersistence: AuthorPersistence): Update0 = {
     import authorPersistence._
     sql"""
-          INSERT INTO author (id, name, url)
-          VALUES($id, $name, $url)
+          INSERT INTO author (id, name, avatar_url)
+          VALUES($id, $name, $avatarUrl)
           ON CONFLICT ON CONSTRAINT PK_AUTHOR DO UPDATE
           SET
               name = $name,
-              url = $url,
+              avatar_url = $avatarUrl,
               refreshed_at = now()""".update
   }
 
@@ -164,7 +164,7 @@ object GithubPostgresRepository {
 
   def selectCommentQuery(teamId: Long, discussionId: Long): Query0[CommentPersistence] =
     sql"""
-          SELECT c.team_id, c.discussion_id, c.comment_id, a.id, a.name, a.url, c.url, c.body, c.body_version, c.created_at, c.updated_at
+          SELECT c.team_id, c.discussion_id, c.comment_id, a.id, a.name, a.avatar_url, c.url, c.body, c.body_version, c.created_at, c.updated_at
           FROM comment c
           JOIN author a ON a.id = c.author_id
           WHERE c.team_id = $teamId AND c.discussion_id = $discussionId
