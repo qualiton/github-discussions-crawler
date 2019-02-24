@@ -2,7 +2,15 @@ apiVersion: v1
 entries:
   github-discussions-crawler:
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.506456796Z
+    created: 2019-02-24T18:26:14.667847742Z
+    description: Publishing github discussion events to slack
+    digest: 53faa83eeb3ba6465c3be3b8fd399b1d695e784df6e48d8f13816aa26d794c75
+    name: github-discussions-crawler
+    urls:
+    - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.29.tgz
+    version: 0.0.29
+  - apiVersion: v1
+    created: 2019-02-24T18:26:14.667565024Z
     description: Publishing github discussion events to slack
     digest: b50df55430844c9faed6c520d0e99ef918df80538cb557895e601a46c393a227
     name: github-discussions-crawler
@@ -10,7 +18,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.28.tgz
     version: 0.0.28
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.50624067Z
+    created: 2019-02-24T18:26:14.667240815Z
     description: Publishing github discussion events to slack
     digest: b2d55cbce4aa917b3479bfc91ac62223ecd32354ea55508783518f04f05287d2
     name: github-discussions-crawler
@@ -18,7 +26,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.27.tgz
     version: 0.0.27
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.506038956Z
+    created: 2019-02-24T18:26:14.666917802Z
     description: Publishing github discussion events to slack
     digest: fd5c0b48e6353bca1c652ad889e0f0d41e32e8e0913dd851ed1faee0ae7dc757
     name: github-discussions-crawler
@@ -26,7 +34,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.26.tgz
     version: 0.0.26
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.505841991Z
+    created: 2019-02-24T18:26:14.66668782Z
     description: Publishing github discussion events to slack
     digest: 07f2812f355af0969b751f24b8bbba7c8a6e35d24acc81a672c7ae1f6fa7194f
     name: github-discussions-crawler
@@ -34,7 +42,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.25.tgz
     version: 0.0.25
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.505636066Z
+    created: 2019-02-24T18:26:14.666491726Z
     description: Publishing github discussion events to slack
     digest: c7e5ccaff829d10dac9ac39e5499fdc76fb9c743a5daf3e4026c0ff138740c56
     name: github-discussions-crawler
@@ -42,7 +50,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.24.tgz
     version: 0.0.24
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.505443832Z
+    created: 2019-02-24T18:26:14.666293179Z
     description: Publishing github discussion events to slack
     digest: c0ee3749a51705d4b249d479558daa30ce3a1f515e8731a80f42f5069135ba5d
     name: github-discussions-crawler
@@ -50,7 +58,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.23.tgz
     version: 0.0.23
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.505240375Z
+    created: 2019-02-24T18:26:14.666096885Z
     description: Publishing github discussion events to slack
     digest: dbe16860d9aa8ef682a0d1bff7dece31a838d69e89aecc1c20ab00b0eab00204
     name: github-discussions-crawler
@@ -58,7 +66,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.22.tgz
     version: 0.0.22
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.505046892Z
+    created: 2019-02-24T18:26:14.665913976Z
     description: Publishing github discussion events to slack
     digest: e8fc145abcf2ad98f5341327156d746e8832bbb674f0ee14b28d3485912e4db5
     name: github-discussions-crawler
@@ -66,7 +74,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.21.tgz
     version: 0.0.21
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.504818643Z
+    created: 2019-02-24T18:26:14.66569653Z
     description: Publishing github discussion events to slack
     digest: ff2a6b92804784cd772e8392e82dfc688649be515b12c7a2a264c365f330d192
     name: github-discussions-crawler
@@ -74,7 +82,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.20.tgz
     version: 0.0.20
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.504628594Z
+    created: 2019-02-24T18:26:14.665497386Z
     description: Publishing github discussion events to slack
     digest: 8926ee5f6a2a536f9dba7b9385d4278ade37d5bdd4f98c7aa78f1ab2613282a8
     name: github-discussions-crawler
@@ -82,7 +90,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.19.tgz
     version: 0.0.19
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.504439798Z
+    created: 2019-02-24T18:26:14.66530652Z
     description: Publishing github discussion events to slack
     digest: 62a2db99110c68e30cdaeb7aaba879a83119bc6289ce1676d4e0a37129092a14
     name: github-discussions-crawler
@@ -90,7 +98,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.18.tgz
     version: 0.0.18
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.504252183Z
+    created: 2019-02-24T18:26:14.665072534Z
     description: Publishing github discussion events to slack
     digest: 944e2335a2e2ccac765a926c6b90a2d438a7a6a723473395888468fa1f81bb64
     name: github-discussions-crawler
@@ -98,7 +106,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.17.tgz
     version: 0.0.17
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.504050976Z
+    created: 2019-02-24T18:26:14.664850675Z
     description: Publishing github discussion events to slack
     digest: 80d4cb9e6219904e05f2a0139b4173110c39cd6bb58c829b2e8f20c61eee7a8a
     name: github-discussions-crawler
@@ -106,7 +114,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.16.tgz
     version: 0.0.16
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.503826752Z
+    created: 2019-02-24T18:26:14.664665501Z
     description: Publishing github discussion events to slack
     digest: 398671b0703631ed74011e13b4231c1e0238cae193dab922f93d266b5e5ef389
     name: github-discussions-crawler
@@ -114,7 +122,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.15.tgz
     version: 0.0.15
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.503638948Z
+    created: 2019-02-24T18:26:14.664471978Z
     description: Publishing github discussion events to slack
     digest: 3f2356ab6b99ee5793f1e4ee1ae23830e59e09b92c1e3d96df97b2d76b58290d
     name: github-discussions-crawler
@@ -122,7 +130,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.14.tgz
     version: 0.0.14
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.50345441Z
+    created: 2019-02-24T18:26:14.664271559Z
     description: Publishing github discussion events to slack
     digest: b17041f45771e72276a32a2ee36ff505706e7dad8fa4a8d031007eae1ef86f87
     name: github-discussions-crawler
@@ -130,7 +138,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.13.tgz
     version: 0.0.13
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.503255484Z
+    created: 2019-02-24T18:26:14.664068631Z
     description: Publishing github discussion events to slack
     digest: 35462687d4fd386e7b8ea1afb320aa7a0497e8dbeed1faef474b4639df22aaf4
     name: github-discussions-crawler
@@ -138,7 +146,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.12.tgz
     version: 0.0.12
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.50304452Z
+    created: 2019-02-24T18:26:14.663861767Z
     description: Publishing github discussion events to slack
     digest: 2765cd1d9008352a033df9710562ef0e879b0d56f7bd2d7ff6f48ed429f9c5bd
     name: github-discussions-crawler
@@ -146,7 +154,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.11.tgz
     version: 0.0.11
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.502832045Z
+    created: 2019-02-24T18:26:14.663556464Z
     description: Publishing github discussion events to slack
     digest: 457cf5f9812fa1a2302d83428a4651e66daf3e9e747df01c671784038536e462
     name: github-discussions-crawler
@@ -154,7 +162,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.10.tgz
     version: 0.0.10
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.507501006Z
+    created: 2019-02-24T18:26:14.669765055Z
     description: Publishing github discussion events to slack
     digest: 4432cf09118f7f1a0f30ff6ccef153966edeaf72121533630802cb5cdf97ae74
     name: github-discussions-crawler
@@ -162,7 +170,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.9.tgz
     version: 0.0.9
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.507295503Z
+    created: 2019-02-24T18:26:14.669574905Z
     description: Publishing github discussion events to slack
     digest: 8066c854a590a48cb6a149ca9ccbae0af373d15eadbe97c29e5d5382f5df6119
     name: github-discussions-crawler
@@ -170,7 +178,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.8.tgz
     version: 0.0.8
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.507098934Z
+    created: 2019-02-24T18:26:14.669381029Z
     description: Publishing github discussion events to slack
     digest: 2dd68789f8511c62dbde5dfa353f798f486574c6000e5b43314fe548611aea32
     name: github-discussions-crawler
@@ -178,7 +186,7 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.7.tgz
     version: 0.0.7
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.506906423Z
+    created: 2019-02-24T18:26:14.668997305Z
     description: Publishing github discussion events to slack
     digest: d4e8b2df7b9ae0d673d1eec506fbca09b697683e5481edd59cdf344887f0db02
     name: github-discussions-crawler
@@ -186,11 +194,11 @@ entries:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.6.tgz
     version: 0.0.6
   - apiVersion: v1
-    created: 2019-02-22T23:27:51.506666095Z
+    created: 2019-02-24T18:26:14.668196557Z
     description: Publishing github discussion events to slack
     digest: 4be3e96dad72dbc1aacf4051e09dd86796dd2be76e4497ae6e799387d9347b1f
     name: github-discussions-crawler
     urls:
     - https://qualiton.github.io/github-discussions-crawler/github-discussions-crawler-0.0.5.tgz
     version: 0.0.5
-generated: 2019-02-22T23:27:51.502477275Z
+generated: 2019-02-24T18:26:14.663075106Z
