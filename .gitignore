@@ -6,4 +6,5 @@ project/project
 .helm/github-discussions-crawler-values.yaml
 .helm/helm_upgrade.sh
 server/native
+docker-compose.yaml
 *.tgz
