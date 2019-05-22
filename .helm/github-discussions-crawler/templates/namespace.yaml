@@ -4,5 +4,5 @@ metadata:
   name: {{ .Values.namespace }}
   labels:
     app: {{ template "fullname" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.AppVersion }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}

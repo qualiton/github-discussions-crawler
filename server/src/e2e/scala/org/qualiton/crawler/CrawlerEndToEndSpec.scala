@@ -22,6 +22,7 @@ import eu.timepit.refined.auto._
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.string.{ Uri, Url }
 import eu.timepit.refined.types.net.UserPortNumber
+import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.{ HCursor, Json }
 import io.circe.parser.parse
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -31,7 +32,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{ Millis, Seconds, Span }
 
 import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig, SlackConfig }
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, KamonConfig, PublisherConfig, SlackConfig }
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ AuthorPersistence, CommentPersistence, DiscussionAggregateRootPersistence, DiscussionPersistence, TeamPersistence }
 import org.qualiton.crawler.server.config.ServiceConfig
@@ -89,6 +90,8 @@ class CrawlerEndToEndSpec
 
   val appHttpPort: UserPortNumber = 9000
 
+  val appName: NonEmptyString = "test-github-discussion-crawler"
+
   val appConfig =
     ServiceConfig(
       httpPort = appHttpPort,
@@ -115,7 +118,10 @@ class CrawlerEndToEndSpec
           jdbcUrl = refineV[Uri](s"jdbc:postgresql://localhost:$postgresAdvertisedPort/postgres").getOrElse(throw new IllegalArgumentException),
           username = "postgres",
           password = config.Secret("postgres"),
-          maximumPoolSize = 5))
+          maximumPoolSize = 5),
+      kamonConfig =
+        KamonConfig(applicationName = appName)
+    )
 
   lazy val dataSource: DataSource[IO] = DataSource[IO](appConfig.databaseConfig, ec, ec)
 

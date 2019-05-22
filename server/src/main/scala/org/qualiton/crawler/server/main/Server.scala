@@ -14,6 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.http4s.client.middleware.RetryPolicy
 
 import org.qualiton.crawler.common.datasource.DataSource
+import org.qualiton.crawler.common.kamon.KamonMetrics
 import org.qualiton.crawler.domain.core.DiscussionEvent
 import org.qualiton.crawler.flyway.FlywayUpdater
 import org.qualiton.crawler.infrastructure.{ GithubStream, HealthcheckHttpServerStream, PublisherStream }
@@ -30,12 +31,13 @@ object Server extends LazyLogging {
       config <- Stream.eval(loadConfig)
       dataSource <- DataSource.stream(config.databaseConfig, ec, ec)
       _ <- Stream.eval(FlywayUpdater(dataSource))
+      _ <- Stream.resource(KamonMetrics.resource(config.kamonConfig))
       discussionEventQueue <- Stream.eval(Queue.bounded[F, DiscussionEvent](100))
       gitStream = GithubStream(discussionEventQueue, dataSource, config.gitConfig)
       publisherStream = PublisherStream(discussionEventQueue, config.publisherConfig)
       httpStream = HealthcheckHttpServerStream(config.httpPort)
       stream <- Stream(httpStream, gitStream.drain, publisherStream.drain)
-        .parJoin(3)
+        .parJoinUnbounded
         .handleErrorWith(t => Stream.eval_(logger.error(t.getMessage, t).delay))
     } yield stream
   }

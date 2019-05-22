@@ -7,6 +7,7 @@ lazy val root =
     .withDocker
     .withRelease
     .withAlpn
+    .withAspectJ
 
 lazy val common =
   (project in file("common"))

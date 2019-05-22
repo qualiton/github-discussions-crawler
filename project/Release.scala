@@ -44,8 +44,8 @@ object Release extends AutoPlugin {
 
     val withNewVersion = IO.read(chartFile)
       .replaceAll(
-        "version:[^\\n]+",
-        s"version: ${ extracted.get(version) }"
+        "appVersion:[^\\n]+",
+        s"appVersion: ${ extracted.get(version) }"
       )
 
     IO.write(chartFile, withNewVersion)

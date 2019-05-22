@@ -65,6 +65,17 @@ object Dependencies extends AutoPlugin {
       .map(module => "org.http4s" %% s"http4s-$module" % Http4sVersion) ++ Seq(
       "org.http4s" %% "http4s-websocket" % "0.2.1")
 
+  private val kamonSigar = Seq("io.kamon" % "sigar-loader" % "1.6.6-rev002")
+
+  private val kamon = Seq(
+    ("core", "1.1.5"),
+    ("prometheus", "1.1.1"),
+    ("executors", "1.0.2"),
+    ("system-metrics", "1.0.1"),
+    ("http4s", "1.0.11"),
+    ("jdbc", "1.0.2")
+  ).map { case (module, version) => "io.kamon" %% s"kamon-$module" % version } ++ kamonSigar
+  
   private val logging =
     Seq(
       "org.slf4j" % "jul-to-slf4j" % "1.7.25",
@@ -132,6 +143,7 @@ object Dependencies extends AutoPlugin {
       cats ++
       fs2 ++
       scodec ++
+      kamon ++
       ciris ++
       circe ++
       scalaCache ++

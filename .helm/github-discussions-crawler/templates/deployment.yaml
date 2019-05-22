@@ -5,7 +5,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.AppVersion }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
@@ -23,12 +23,15 @@ spec:
         app: {{ template "fullname" . }}
         tier: backend
       annotations:
+        prometheus.io/path: /
+        prometheus.io/port: "9095"
+        prometheus.io/scrape: "true"
         checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ template "fullname" . }}-account
       containers:
       - name: {{ .Chart.Name }}
-        image: "{{ .Values.dockerhub.username }}/{{ .Values.service.name }}:{{ .Chart.Version }}"
+        image: "{{ .Values.dockerhub.username }}/{{ .Values.service.name }}:{{ .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: GITHUB_API_TOKEN

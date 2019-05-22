@@ -13,7 +13,7 @@ import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.string.NonEmptyString
 
 import org.qualiton.crawler.common.config
-import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, PublisherConfig, SlackConfig }
+import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, KamonConfig, PublisherConfig, SlackConfig }
 import org.qualiton.crawler.domain.git.GithubApiClient
 import org.qualiton.slack.SlackApiClient
 
@@ -39,6 +39,7 @@ object DefaultConfigLoader extends ConfigLoader {
       env[NonEmptyString]("DATABASE_PASSWORD"),
       env[Option[UserPortNumber]]("HTTP_PORT"),
     ) { (githubApiToken, githubRefreshInterval, slackApiToken, maybeSlackDefaultPublishChannel, slackDisablePublish, dbJdbcUrl, dbUsername, dbPassword, httpPort) =>
+      val appName: NonEmptyString = "github-discussion-crawler"
       ServiceConfig(
         httpPort = httpPort.getOrElse(9000),
         gitConfig =
@@ -64,7 +65,9 @@ object DefaultConfigLoader extends ConfigLoader {
             jdbcUrl = dbJdbcUrl,
             username = dbUsername,
             password = config.Secret(dbPassword),
-            maximumPoolSize = 3)
+            maximumPoolSize = 3),
+        kamonConfig =
+          KamonConfig(applicationName = appName)
       )
     }
   }
