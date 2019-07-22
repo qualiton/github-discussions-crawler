@@ -30,7 +30,7 @@ The app uses Slack's RTM api which gives event driven capabilities to the servic
 
 - Kubernetes cluster with helm/tiller installed
 - Postgres SQL database to store Github discussion details
-- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` permission for an account which is member of the discussion we would like to have updates from
+- [Github API token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) with `read:discussion  Read team discussions` and `read:org  Read org and team membership, read org projects` permission for an account which is member of the discussion we would like to have updates from
 - [Slack Bot User](https://api.slack.com/bot-users) for Github Discussions Crawler
 
 ## Installing the Chart
