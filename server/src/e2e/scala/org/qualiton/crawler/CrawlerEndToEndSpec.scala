@@ -10,10 +10,8 @@ import cats.data.{ NonEmptyList, OptionT }
 import cats.effect.{ ContextShift, IO }
 import cats.scalatest.{ EitherMatchers, ValidatedValues }
 import cats.syntax.flatMap._
-import cats.syntax.functor._
 import fs2.concurrent.SignallingRef
 
-import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.util.query.Query0
 import doobie.util.transactor.Transactor
@@ -23,6 +21,7 @@ import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.string.{ Uri, Url }
 import eu.timepit.refined.types.net.UserPortNumber
 import eu.timepit.refined.types.string.NonEmptyString
+import io.chrisdavenport.log4cats.Logger
 import io.circe.{ HCursor, Json }
 import io.circe.parser.parse
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -34,6 +33,7 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 import org.qualiton.crawler.common.config
 import org.qualiton.crawler.common.config.{ DatabaseConfig, GitConfig, KamonConfig, PublisherConfig, SlackConfig }
 import org.qualiton.crawler.common.datasource.DataSource
+import org.qualiton.crawler.common.logging.LoggingIO
 import org.qualiton.crawler.infrastructure.persistence.git.GithubPostgresRepository.{ AuthorPersistence, CommentPersistence, DiscussionAggregateRootPersistence, DiscussionPersistence, TeamPersistence }
 import org.qualiton.crawler.server.config.ServiceConfig
 import org.qualiton.crawler.server.main.Server
@@ -60,7 +60,7 @@ class CrawlerEndToEndSpec
     with SlackRtmApiMockServerSupport
     with PostgresDockerTestKit
     with Inside
-    with LazyLogging {
+    with LoggingIO {
 
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(
@@ -530,7 +530,7 @@ class CrawlerEndToEndSpec
   }
 
   def resetTables(): Unit = {
-    logger.warn("Reset tables before next test!")
+    Logger[IO].warn("Reset tables before next test!").unsafeRunSync()
     (sql"TRUNCATE TABLE team CASCADE".update.run >> sql"TRUNCATE TABLE author CASCADE".update.run).transact(transactor).void.unsafeRunSync()
   }
 

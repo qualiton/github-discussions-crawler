@@ -12,9 +12,9 @@ import cats.syntax.functor._
 import cats.syntax.traverse._
 import fs2.Stream
 
-import com.typesafe.scalalogging.LazyLogging
 import eu.timepit.refined.auto.autoUnwrap
 import eu.timepit.refined.types.string.NonEmptyString
+import io.chrisdavenport.log4cats.Logger
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.middleware.{ Retry, RetryPolicy }
@@ -30,10 +30,9 @@ import org.qualiton.crawler.infrastructure.rest.slack.SlackEventPublisher.SlackE
 import org.qualiton.slack.{ SlackApiClient, SlackApiHttp4sClient }
 import org.qualiton.slack.models.Channel
 
-class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[F], defaultChannelName: NonEmptyString)
+class SlackEventPublisher[F[_] : Effect : Logger] private(slackApiClient: SlackApiClient[F], defaultChannelName: NonEmptyString)
   extends EventPublisher[F]
-    with Http4sClientDsl[F]
-    with LazyLogging {
+    with Http4sClientDsl[F] {
 
   val F = implicitly[Effect[F]]
 
@@ -45,7 +44,7 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
         for {
           message <- fromDomain(event).delay
           channelIds <- event.targeted.teams.toList.traverse(findChannelByName(_)).map(channel.id :: _.flatten.map(_.id))
-          _ <- logger.info(s"Sending message `$message` to $channelIds").delay
+          _ <- Logger[F].info(s"Sending message `$message` to $channelIds")
           _ <- channelIds.traverse(slackApiClient.postChatMessage(_, message))
         } yield ()
       })
@@ -53,20 +52,20 @@ class SlackEventPublisher[F[_] : Effect] private(slackApiClient: SlackApiClient[
 
   private def findChannelByName(channelName: String): F[Option[Channel]] = memoizeF[F, Option[Channel]](Some(10.minutes)) {
     for {
-      _ <- logger.info(s"Resolving channelName $channelName").delay
+      _ <- Logger[F].info(s"Resolving channelName $channelName")
       resolvableChannelName = if (channelName.startsWith("#")) channelName.substring(1) else channelName
       maybeChannel <- slackApiClient.findChannelByName(resolvableChannelName)
-      _ <- maybeChannel.traverse(c => logger.info(s"Resolved channel $c").delay)
+      _ <- maybeChannel.traverse(c => Logger[F].info(s"Resolved channel $c"))
     } yield maybeChannel
   }
 }
 
 object SlackEventPublisher {
 
-  def stream[F[_] : ConcurrentEffect](slackApiClient: SlackApiClient[F], defaultChannelName: NonEmptyString): Stream[F, EventPublisher[F]] =
+  def stream[F[_] : ConcurrentEffect : Logger](slackApiClient: SlackApiClient[F], defaultChannelName: NonEmptyString): Stream[F, EventPublisher[F]] =
     new SlackEventPublisher[F](slackApiClient, defaultChannelName).delay.stream
 
-  def stream[F[_] : ConcurrentEffect : Timer](slackConfig: SlackConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, EventPublisher[F]] =
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](slackConfig: SlackConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, EventPublisher[F]] =
     for {
       retryClient <- BlazeClientBuilder[F](ec).withRequestTimeout(slackConfig.requestTimeout).stream.map(Retry(retryPolicy)(_))
       slackApiClient <- SlackApiHttp4sClient.stream(retryClient, slackConfig.apiToken.value, slackConfig.baseUrl)

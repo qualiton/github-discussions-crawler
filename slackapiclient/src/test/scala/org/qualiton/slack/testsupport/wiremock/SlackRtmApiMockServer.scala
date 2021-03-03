@@ -9,7 +9,6 @@ import cats.effect.{ ContextShift, IO, Timer }
 import fs2.{ Pipe, Stream }
 import fs2.concurrent.SignallingRef
 
-import com.typesafe.scalalogging.LazyLogging
 import io.circe.generic.extras.auto._
 import io.circe.generic.extras.Configuration
 import io.circe.parser._
@@ -24,7 +23,7 @@ import org.qualiton.slack.rtm.slack.models.{ Hello, Pong, SlackEvent }
 import org.qualiton.slack.rtm.SlackRtmApiClient.{ ClientMessage, Ping }
 import org.qualiton.slack.testsupport.wiremock.SlackRtmApiMockServer.SlackRtmApiPort
 
-class SlackRtmApiMockServer(slackRtmApiPort: Int = SlackRtmApiPort) extends Http4sDsl[IO] with LazyLogging {
+class SlackRtmApiMockServer(slackRtmApiPort: Int = SlackRtmApiPort) extends Http4sDsl[IO] {
 
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
   implicit val ES = Executors.newCachedThreadPool()
@@ -59,7 +58,7 @@ class SlackRtmApiMockServer(slackRtmApiPort: Int = SlackRtmApiPort) extends Http
       event <- decoded match {
         case Right(event) => Stream.emit(event)
         case Left(error) =>
-          logger.warn(s"Event cannot be processed ($error): ${ frame.a }")
+          Stream.eval(IO(println(s"Event cannot be processed ($error): ${ frame.a }"))) >>
           Stream.empty
       }
     } yield event

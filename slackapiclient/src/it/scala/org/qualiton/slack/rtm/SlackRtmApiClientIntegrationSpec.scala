@@ -7,13 +7,14 @@ import scala.concurrent.duration._
 import cats.effect.{ ContextShift, IO, Timer }
 import cats.scalatest.{ EitherMatchers, EitherValues }
 
-import com.typesafe.scalalogging.LazyLogging
 import eu.timepit.refined.refineV
 import eu.timepit.refined.string.Url
+import io.chrisdavenport.log4cats.Logger
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.{ BeforeAndAfterAll, FreeSpec, Inside, Matchers, OptionValues }
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{ Millis, Seconds, Span }
+import io.chrisdavenport.log4cats.noop.NoOpLogger
 
 import org.qualiton.slack.rtm.slack.models.SlackEvent
 import org.qualiton.slack.testsupport.scalatest.{ SlackApiMockServerSupport, SlackRtmApiMockServerSupport }
@@ -29,8 +30,7 @@ class SlackRtmApiClientIntegrationSpec extends FreeSpec
   with TypeCheckedTripleEquals
   with Inside
   with SlackApiMockServerSupport
-  with SlackRtmApiMockServerSupport
-  with LazyLogging {
+  with SlackRtmApiMockServerSupport {
 
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(
@@ -49,7 +49,9 @@ class SlackRtmApiClientIntegrationSpec extends FreeSpec
 
       implicit val cs: ContextShift[IO] = IO.contextShift(ec)
 
-      val pipe: fs2.Pipe[IO, SlackEvent, Unit] = _.evalMap(e => IO(logger.info(s"log: ${ e.toString }")))
+      implicit val noopLogging = NoOpLogger.impl[IO]
+
+      val pipe: fs2.Pipe[IO, SlackEvent, Unit] = _.evalMap(e => Logger[IO].info(s"log: ${ e.toString }"))
 
       val program = for {
         slackRtmClient <- org.qualiton.slack.rtm.SlackRtmApiClient.stream[IO](

@@ -2,7 +2,6 @@ package org.qualiton.crawler
 package server.main
 
 import cats.effect.{ ExitCode, IO, IOApp }
-import cats.implicits.toFunctorOps
 
 import org.qualiton.crawler.common.concurrent.CachedExecutionContext
 import org.qualiton.crawler.server.config.DefaultConfigLoader

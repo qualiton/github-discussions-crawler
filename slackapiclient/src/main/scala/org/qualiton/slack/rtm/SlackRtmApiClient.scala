@@ -11,11 +11,11 @@ import scala.concurrent.ExecutionContext
 import cats.effect.{ ConcurrentEffect, ContextShift, Effect, Timer }
 import fs2.{ Pipe, Stream }
 import fs2.concurrent.Queue
-
-import com.typesafe.scalalogging.LazyLogging
+import cats.implicits._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Url
 import eu.timepit.refined.types.string.NonEmptyString
+import io.chrisdavenport.log4cats.Logger
 import io.circe.generic.extras.auto._
 import io.circe.generic.extras.Configuration
 import io.circe.parser._
@@ -30,8 +30,8 @@ import org.qualiton.slack.{ SlackApiClient, SlackApiHttp4sClient }
 import org.qualiton.slack.rtm.SlackRtmApiClient.{ ClientMessage, Ping }
 import org.qualiton.slack.rtm.slack.models.SlackEvent
 
-class SlackRtmApiClient[F[_] : ConcurrentEffect : ContextShift : Timer] private(val slackApiClient: SlackApiClient[F], pingInterval: FiniteDuration)
-  (implicit AG: AsynchronousChannelGroup) extends LazyLogging {
+class SlackRtmApiClient[F[_] : ConcurrentEffect : ContextShift : Timer : Logger] private(val slackApiClient: SlackApiClient[F], pingInterval: FiniteDuration)
+  (implicit AG: AsynchronousChannelGroup) {
 
   val F = implicitly[Effect[F]]
 
@@ -56,13 +56,13 @@ class SlackRtmApiClient[F[_] : ConcurrentEffect : ContextShift : Timer] private(
     } yield ws
 
     program
-      .handleErrorWith(t => Stream.eval(F.delay(logger.error(s"Error in ws stream, restart connection: ${ t.getMessage }", t))) >> through(clientPipe))
+      .handleErrorWith(t => Stream.eval(Logger[F].error(t)(s"Error in ws stream, restart connection: ${ t.getMessage }")) >> through(clientPipe))
   }
 
   private def webSocketRequest: Stream[F, WebSocketRequest] = {
     def resolveBy(uri: URI): F[WebSocketRequest] =
+      Logger[F].info(s"Connecting to $uri") >>
       F.delay {
-        logger.info(s"Connecting to $uri")
         val ws: (String, Int, String) => WebSocketRequest = (host, port, path) => WebSocketRequest.ws(host, port, path)
         val wss: (String, Int, String) => WebSocketRequest = (host, port, path) => WebSocketRequest.wss(host, port, path)
 
@@ -95,20 +95,20 @@ class SlackRtmApiClient[F[_] : ConcurrentEffect : ContextShift : Timer] private(
       event <- decoded match {
         case Right(event) => Stream.emit(event)
         case Left(error) =>
-          logger.warn(s"Event cannot be processed ($error): ${ frame.a }")
+          Stream.eval(Logger[F].warn(s"Event cannot be processed ($error): ${ frame.a }")) >>
           Stream.empty
       }
     } yield event
 
 }
 
-object SlackRtmApiClient extends LazyLogging {
+object SlackRtmApiClient {
 
-  def stream[F[_] : ConcurrentEffect : Timer : ContextShift](slackApiClient: SlackApiClient[F], pingInterval: FiniteDuration)
+  def stream[F[_] : ConcurrentEffect : Timer : ContextShift : Logger](slackApiClient: SlackApiClient[F], pingInterval: FiniteDuration)
     (implicit AG: AsynchronousChannelGroup): Stream[F, SlackRtmApiClient[F]] =
     Stream.eval(Effect[F].delay(new SlackRtmApiClient(slackApiClient, pingInterval)))
 
-  def stream[F[_] : ConcurrentEffect : ContextShift : Timer](
+  def stream[F[_] : ConcurrentEffect : ContextShift : Timer : Logger](
       token: NonEmptyString,
       requestTimeout: Duration = 5.second,
       pingInterval: FiniteDuration = 60.seconds,

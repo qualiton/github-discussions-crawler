@@ -7,20 +7,20 @@ import cats.syntax.traverse._
 import fs2.Stream
 import fs2.concurrent.Queue
 
-import com.typesafe.scalalogging.LazyLogging
+import io.chrisdavenport.log4cats.Logger
 
 import org.qualiton.crawler.domain.core.DiscussionEvent
 import org.qualiton.crawler.domain.git.{ EventGenerator, GithubApiClient, GithubRepository }
 
-class GithubDiscussionHandler[F[_] : Effect] private(
+class GithubDiscussionHandler[F[_] : Effect : Logger] private(
     eventQueue: Queue[F, DiscussionEvent],
     githubClient: GithubApiClient[F],
-    githubRepository: GithubRepository[F]) extends LazyLogging {
+    githubRepository: GithubRepository[F]) {
 
   def synchronizeDiscussions(): Stream[F, Unit] =
     for {
       lastUpdatedAt <- githubRepository.findLastUpdatedAt.stream
-      _ <- logger.info(s"Synchronizing discussions updated after $lastUpdatedAt").delay.stream
+      _ <- Stream.eval(Logger[F].info(s"Synchronizing discussions updated after $lastUpdatedAt"))
       currentDiscussion <- githubClient.getTeamDiscussionsUpdatedAfter(lastUpdatedAt)
       maybePreviousDiscussion <- githubRepository.find(currentDiscussion.id).stream
       maybeEvent <- EventGenerator.generateEvent(maybePreviousDiscussion, currentDiscussion).stream
@@ -31,7 +31,7 @@ class GithubDiscussionHandler[F[_] : Effect] private(
 
 object GithubDiscussionHandler {
 
-  def stream[F[_] : Effect](
+  def stream[F[_] : Effect : Logger](
       eventQueue: Queue[F, DiscussionEvent],
       githubClient: GithubApiClient[F],
       githubRepository: GithubRepository[F]): Stream[F, GithubDiscussionHandler[F]] =

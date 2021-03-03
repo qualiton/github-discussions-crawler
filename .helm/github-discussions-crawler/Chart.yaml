@@ -2,4 +2,4 @@ apiVersion: v1
 description: Publishing github discussion events to slack
 name: github-discussions-crawler
 appVersion: 0.0.32
-version: 0.1.0
+version: 0.1.1

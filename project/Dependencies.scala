@@ -15,6 +15,7 @@ object Dependencies extends AutoPlugin {
   private val CirceVersion = "0.11.0"
   private val MonocleVersion = "1.5.1-cats"
   private val ScalaCacheVersion = "0.27.0"
+  private val CatsLoggerVersion = "1.1.1"
 
 
   private val cats = Seq(
@@ -80,7 +81,8 @@ object Dependencies extends AutoPlugin {
     Seq(
       "org.slf4j" % "jul-to-slf4j" % "1.7.25",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2")
+      "io.chrisdavenport" %% "log4cats-core" % CatsLoggerVersion,
+      "io.chrisdavenport" %% "log4cats-slf4j" % CatsLoggerVersion)
 
   private val doobie =
     Seq(
@@ -134,6 +136,8 @@ object Dependencies extends AutoPlugin {
       "com.whisk" %% "docker-testkit-impl-spotify" % DockerTestkitVersion,
       "com.whisk" %% "docker-testkit-scalatest" % DockerTestkitVersion,
       "com.spotify" % "docker-client" % "8.11.2",
+      "io.chrisdavenport" %% "log4cats-testing" % CatsLoggerVersion,
+      "io.chrisdavenport" %% "log4cats-noop" % CatsLoggerVersion,
       "com.github.tomakehurst" % "wiremock-standalone" % "2.19.0")
       .map(_ % "test")
 

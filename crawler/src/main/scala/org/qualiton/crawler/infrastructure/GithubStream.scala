@@ -7,6 +7,7 @@ import cats.effect.{ ConcurrentEffect, ContextShift, Timer }
 import fs2.Stream
 import fs2.concurrent.Queue
 
+import io.chrisdavenport.log4cats.Logger
 import org.http4s.client.middleware.RetryPolicy
 
 import org.qualiton.crawler.application.GithubDiscussionHandler
@@ -19,7 +20,7 @@ import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient
 
 object GithubStream {
 
-  def apply[F[_] : ConcurrentEffect : ContextShift : Timer](
+  def apply[F[_] : ConcurrentEffect : ContextShift : Timer : Logger](
       eventQueue: Queue[F, DiscussionEvent],
       dataSource: DataSource[F],
       gitConfig: GitConfig)

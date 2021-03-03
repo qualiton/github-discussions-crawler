@@ -9,8 +9,8 @@ import scala.concurrent.ExecutionContext
 import cats.effect.{ ConcurrentEffect, Effect, Timer }
 import fs2.Stream
 
-import com.typesafe.scalalogging.LazyLogging
 import eu.timepit.refined.auto.autoUnwrap
+import io.chrisdavenport.log4cats.Logger
 import io.circe.Decoder
 import io.circe.fs2._
 import io.circe.generic.auto._
@@ -27,9 +27,9 @@ import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
 import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionCommentEntity, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
-class GithubHttp4sApiClient[F[_] : Effect] private(
+class GithubHttp4sApiClient[F[_] : Effect : Logger] private(
     client: Client[F],
-    gitConfig: GitConfig) extends GithubApiClient[F] with Http4sClientDsl[F] with LazyLogging {
+    gitConfig: GitConfig) extends GithubApiClient[F] with Http4sClientDsl[F] {
 
   import gitConfig._
 
@@ -91,19 +91,21 @@ class GithubHttp4sApiClient[F[_] : Effect] private(
 
     def filterDiscussions(teamDiscussionAggregateRoot: TeamDiscussionAggregateRoot): Stream[F, TeamDiscussionAggregateRoot] =
       if (teamDiscussionAggregateRoot.lastUpdated.isAfter(instant)) {
-        logger.info(s"New item found in ${ teamDiscussionAggregateRoot.team.name } -> ${ teamDiscussionAggregateRoot.discussion.title }")
+        Stream.eval(Logger[F].info(s"New item found in ${ teamDiscussionAggregateRoot.team.name } -> ${ teamDiscussionAggregateRoot.discussion.title }")) >>
         Stream.emit(teamDiscussionAggregateRoot)
       } else {
         Stream.empty.covary
       }
 
-    for {
+    val program = for {
       team <- getUserTeams()
       discussion <- getTeamDiscussions(team.id)
       comments <- getTeamDiscussionComments(team.id, discussion.number)
       domainDiscussion <- DiscussionRestAssembler.toDomain(team, discussion, comments).stream
       filteredDomainDiscussion <- filterDiscussions(domainDiscussion)
     } yield filteredDomainDiscussion
+
+    program.handleErrorWith(t => Stream.eval(Logger[F].error(t)("Error getting discussions!")) >> Stream.empty)
   }
 }
 
@@ -139,10 +141,10 @@ object GithubHttp4sApiClient {
       created_at: Instant,
       updated_at: Instant)
 
-  def stream[F[_] : ConcurrentEffect : Timer](client: Client[F], gitConfig: GitConfig): Stream[F, GithubApiClient[F]] =
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](client: Client[F], gitConfig: GitConfig): Stream[F, GithubApiClient[F]] =
     new GithubHttp4sApiClient[F](client, gitConfig).delay[F].stream
 
-  def stream[F[_] : ConcurrentEffect : Timer](gitConfig: GitConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](gitConfig: GitConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
     for {
       retryClient <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream.map(Retry(retryPolicy)(_))
       githubClient <- stream(retryClient, gitConfig)

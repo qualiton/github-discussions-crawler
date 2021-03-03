@@ -10,8 +10,9 @@ import cats.effect.{ ConcurrentEffect, ContextShift, ExitCode, Timer }
 import fs2.Stream
 import fs2.concurrent.Queue
 
-import com.typesafe.scalalogging.LazyLogging
 import org.http4s.client.middleware.RetryPolicy
+import io.chrisdavenport.log4cats.{ Logger, SelfAwareStructuredLogger }
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.common.kamon.KamonMetrics
@@ -20,12 +21,14 @@ import org.qualiton.crawler.flyway.FlywayUpdater
 import org.qualiton.crawler.infrastructure.{ GithubStream, HealthcheckHttpServerStream, PublisherStream }
 import org.qualiton.crawler.server.config.ServiceConfig
 
-object Server extends LazyLogging {
+object Server {
 
   def fromConfig[F[_] : ConcurrentEffect : ContextShift : Timer](loadConfig: F[ServiceConfig])
     (implicit ec: ExecutionContext, es: ExecutorService): Stream[F, ExitCode] = {
 
     implicit val retryPolicy = RetryPolicy[F](RetryPolicy.exponentialBackoff(2.minutes, 10), RetryPolicy.defaultRetriable)
+
+    implicit val logger: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger
 
     for {
       config <- Stream.eval(loadConfig)
@@ -38,7 +41,7 @@ object Server extends LazyLogging {
       httpStream = HealthcheckHttpServerStream(config.httpPort)
       stream <- Stream(httpStream, gitStream.drain, publisherStream.drain)
         .parJoinUnbounded
-        .handleErrorWith(t => Stream.eval_(logger.error(t.getMessage, t).delay))
+        .handleErrorWith(t => Stream.eval_(Logger[F].error(t)(t.getMessage).delay))
     } yield stream
   }
 }
