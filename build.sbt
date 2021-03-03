@@ -16,7 +16,7 @@ lazy val common =
 
 lazy val slackapiclient =
   (project in file("slackapiclient"))
-    .withTestConfig(40.5)
+    .withTestConfig(40.22)
     .withDependencies
 
 lazy val crawler =
