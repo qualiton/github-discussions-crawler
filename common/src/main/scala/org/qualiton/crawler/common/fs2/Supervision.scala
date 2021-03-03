@@ -12,7 +12,7 @@ object Supervision extends LazyLogging {
   def logAndRestartOnError[F[_] : Sync, A](channel: String): Fs2Pipe[F, A, A] = { in =>
     def restart: Stream[F, A] = in.onError {
       case e =>
-        Stream.eval(logger.warn(s"Restarting $channel stream", e).delay)
+        Stream.eval(logger.error(s"Restarting $channel stream", e).delay)
     }
       .handleErrorWith(e => restart)
 
