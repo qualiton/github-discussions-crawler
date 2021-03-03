@@ -162,7 +162,7 @@ jobs:
         name: Init helm
         command: |
           curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash -s -- -v $HELM_VERSION
-          helm init --client-only
+          helm init --stable-repo-url https://charts.helm.sh/stable --client-only
     - run:
         name: Package chart
         command: |
