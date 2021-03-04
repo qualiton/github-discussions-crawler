@@ -24,7 +24,6 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.middleware.{ Retry, RetryPolicy }
 import org.http4s.headers.{ Accept, Authorization, Link }
-import upperbound.Limiter
 
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
@@ -32,15 +31,10 @@ import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ Team
 
 class GithubHttp4sApiClient[F[_] : Concurrent : Logger] private(
     client: Client[F],
-    gitConfig: GitConfig,
-    githubApiLimiter: Limiter[F]) extends GithubApiClient[F] with Http4sClientDsl[F] {
+    gitConfig: GitConfig) extends GithubApiClient[F] with Http4sClientDsl[F] {
 
   import gitConfig._
 
-//  implicit private val rateLimiter: Limiter[F] = githubApiLimiter
-
-  println(githubApiLimiter)
-  
   private val authorization = Authorization(Credentials.Token(AuthScheme.Basic, Base64.getEncoder.encodeToString(s"${ apiToken.value.value }:x-oauth-basic".getBytes)))
   private val previewAcceptHeader = Header("Accept", "application/vnd.github.echo-preview+json")
 
@@ -48,7 +42,7 @@ class GithubHttp4sApiClient[F[_] : Concurrent : Logger] private(
     prepareRequest(
       Uri.unsafeFromString(baseUrl)
         .withPath(path)
-        .withQueryParam("direction", "asc")
+        .withQueryParam("direction", "desc")
         .withQueryParam("per_page", "100"), acceptHeader)
 
   private def prepareRequest(uri: Uri, acceptHeader: Header): Request[F] =
@@ -78,7 +72,6 @@ class GithubHttp4sApiClient[F[_] : Concurrent : Logger] private(
       maybeNextUri.fold[Stream[F, A]](Stream.empty.covary)(uri => sendReceiveStream[A](prepareRequest(uri, acceptHeader)))
 
     for {
-//      response <- Stream.eval(Limiter.await(client.fetch(request)(_.pure[F])))
       response <- client.stream(request)
       maybeNextUri = extractNextUri(response)
       acceptHeader = extractCurrentRequestAcceptHeader(request)
@@ -152,12 +145,12 @@ object GithubHttp4sApiClient {
       created_at: Instant,
       updated_at: Instant)
 
-  def stream[F[_] : ConcurrentEffect : Timer : Logger](client: Client[F], gitConfig: GitConfig, githubApiLimiter: Limiter[F]): Stream[F, GithubApiClient[F]] =
-    new GithubHttp4sApiClient[F](client, gitConfig, githubApiLimiter).delay[F].stream
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](client: Client[F], gitConfig: GitConfig): Stream[F, GithubApiClient[F]] =
+    new GithubHttp4sApiClient[F](client, gitConfig).delay[F].stream
 
-  def stream[F[_] : ConcurrentEffect : Timer : Logger](gitConfig: GitConfig, githubApiLimiter: Limiter[F])(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](gitConfig: GitConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
     for {
       retryClient <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream.map(Retry(retryPolicy)(_))
-      githubClient <- stream(retryClient, gitConfig, githubApiLimiter)
+      githubClient <- stream(retryClient, gitConfig)
     } yield githubClient
 }
