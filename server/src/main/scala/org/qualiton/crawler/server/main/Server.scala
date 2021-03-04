@@ -13,6 +13,8 @@ import fs2.concurrent.Queue
 import org.http4s.client.middleware.RetryPolicy
 import io.chrisdavenport.log4cats.{ Logger, SelfAwareStructuredLogger }
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import upperbound.Limiter
+import upperbound.syntax.rate.upperboundSyntaxEvery
 
 import org.qualiton.crawler.common.datasource.DataSource
 import org.qualiton.crawler.common.kamon.KamonMetrics
@@ -36,7 +38,8 @@ object Server {
       _ <- Stream.eval(FlywayUpdater(dataSource))
       _ <- Stream.resource(KamonMetrics.resource(config.kamonConfig))
       discussionEventQueue <- Stream.eval(Queue.bounded[F, DiscussionEvent](100))
-      gitStream = GithubStream(discussionEventQueue, dataSource, config.gitConfig)
+      githubApiRequestsRateLimiter <- Stream.resource(Limiter.start[F](4000 every 1.hour))
+      gitStream = GithubStream(discussionEventQueue, dataSource, config.gitConfig, githubApiRequestsRateLimiter)
       publisherStream = PublisherStream(discussionEventQueue, config.publisherConfig)
       httpStream = HealthcheckHttpServerStream(config.httpPort)
       stream <- Stream(httpStream, gitStream.drain, publisherStream.drain)

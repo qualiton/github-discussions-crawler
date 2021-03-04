@@ -120,6 +120,7 @@ object Dependencies extends AutoPlugin {
     Seq(
       "eu.timepit" %% "refined" % RefinedVersion,
       "eu.timepit" %% "refined-cats" % RefinedVersion,
+      "org.systemfw" %% "upperbound" % "0.3.0",
       "com.github.slack-scala-client" %% "slack-scala-client" % "0.2.4",
       "org.scalactic" %% "scalactic" % "3.0.5")
 

@@ -6,13 +6,15 @@ import java.util.Base64
 
 import scala.concurrent.ExecutionContext
 
-import cats.effect.{ ConcurrentEffect, Effect, Timer }
+import cats.effect.{ Concurrent, ConcurrentEffect, Timer }
 import fs2.Stream
 
 import eu.timepit.refined.auto.autoUnwrap
 import io.chrisdavenport.log4cats.Logger
 import io.circe.Decoder
 import io.circe.fs2._
+import cats.implicits._
+
 import io.circe.generic.auto._
 import org.http4s.{ AuthScheme, Credentials, Header, Headers, Method, Request, Response, Uri }
 import org.http4s.syntax.string._
@@ -22,17 +24,23 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.middleware.{ Retry, RetryPolicy }
 import org.http4s.headers.{ Accept, Authorization, Link }
+import upperbound.Limiter
 
 import org.qualiton.crawler.common.config.GitConfig
 import org.qualiton.crawler.domain.git._
 import org.qualiton.crawler.infrastructure.rest.git.GithubHttp4sApiClient.{ TeamDiscussionCommentEntity, TeamDiscussionCommentsResponse, TeamDiscussionResponse, UserTeamResponse }
 
-class GithubHttp4sApiClient[F[_] : Effect : Logger] private(
+class GithubHttp4sApiClient[F[_] : Concurrent : Logger] private(
     client: Client[F],
-    gitConfig: GitConfig) extends GithubApiClient[F] with Http4sClientDsl[F] {
+    gitConfig: GitConfig,
+    githubApiLimiter: Limiter[F]) extends GithubApiClient[F] with Http4sClientDsl[F] {
 
   import gitConfig._
 
+//  implicit private val rateLimiter: Limiter[F] = githubApiLimiter
+
+  println(githubApiLimiter)
+  
   private val authorization = Authorization(Credentials.Token(AuthScheme.Basic, Base64.getEncoder.encodeToString(s"${ apiToken.value.value }:x-oauth-basic".getBytes)))
   private val previewAcceptHeader = Header("Accept", "application/vnd.github.echo-preview+json")
 
@@ -64,12 +72,13 @@ class GithubHttp4sApiClient[F[_] : Effect : Logger] private(
       request.headers.get("accept".ci).getOrElse(Accept(json))
 
     def decodedResponseStream(response: Response[F]): Stream[F, A] =
-      response.bodyAsText.through(stringArrayParser).through(decoder[F, A])
+      response.bodyAsText.through(stringArrayParser).evalTap(json => Logger[F].debug(s"response value: $json")).through(decoder[F, A])
 
     def followNextLink(maybeNextUri: Option[Uri], acceptHeader: Header): Stream[F, A] =
       maybeNextUri.fold[Stream[F, A]](Stream.empty.covary)(uri => sendReceiveStream[A](prepareRequest(uri, acceptHeader)))
 
     for {
+//      response <- Stream.eval(Limiter.await(client.fetch(request)(_.pure[F])))
       response <- client.stream(request)
       maybeNextUri = extractNextUri(response)
       acceptHeader = extractCurrentRequestAcceptHeader(request)
@@ -99,7 +108,9 @@ class GithubHttp4sApiClient[F[_] : Effect : Logger] private(
 
     val program = for {
       team <- getUserTeams()
+      _ <- Stream.eval(Logger[F].info(s"Found team $team"))
       discussion <- getTeamDiscussions(team.id)
+      _ <- Stream.eval(Logger[F].info(s"Found discussion $discussion"))
       comments <- getTeamDiscussionComments(team.id, discussion.number)
       domainDiscussion <- DiscussionRestAssembler.toDomain(team, discussion, comments).stream
       filteredDomainDiscussion <- filterDiscussions(domainDiscussion)
@@ -141,12 +152,12 @@ object GithubHttp4sApiClient {
       created_at: Instant,
       updated_at: Instant)
 
-  def stream[F[_] : ConcurrentEffect : Timer : Logger](client: Client[F], gitConfig: GitConfig): Stream[F, GithubApiClient[F]] =
-    new GithubHttp4sApiClient[F](client, gitConfig).delay[F].stream
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](client: Client[F], gitConfig: GitConfig, githubApiLimiter: Limiter[F]): Stream[F, GithubApiClient[F]] =
+    new GithubHttp4sApiClient[F](client, gitConfig, githubApiLimiter).delay[F].stream
 
-  def stream[F[_] : ConcurrentEffect : Timer : Logger](gitConfig: GitConfig)(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
+  def stream[F[_] : ConcurrentEffect : Timer : Logger](gitConfig: GitConfig, githubApiLimiter: Limiter[F])(implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, GithubApiClient[F]] =
     for {
       retryClient <- BlazeClientBuilder[F](ec).withRequestTimeout(gitConfig.requestTimeout).stream.map(Retry(retryPolicy)(_))
-      githubClient <- stream(retryClient, gitConfig)
+      githubClient <- stream(retryClient, gitConfig, githubApiLimiter)
     } yield githubClient
 }

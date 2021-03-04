@@ -21,3 +21,4 @@ resources:
     cpu: "500m"
 dockerhub:
   username: lachatak
+log_level: INFO

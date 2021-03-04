@@ -9,6 +9,7 @@ import fs2.concurrent.Queue
 
 import io.chrisdavenport.log4cats.Logger
 import org.http4s.client.middleware.RetryPolicy
+import upperbound.Limiter
 
 import org.qualiton.crawler.application.GithubDiscussionHandler
 import org.qualiton.crawler.common.config.GitConfig
@@ -23,11 +24,12 @@ object GithubStream {
   def apply[F[_] : ConcurrentEffect : ContextShift : Timer : Logger](
       eventQueue: Queue[F, DiscussionEvent],
       dataSource: DataSource[F],
-      gitConfig: GitConfig)
+      gitConfig: GitConfig,
+      githubApiLimiter: Limiter[F])
     (implicit ec: ExecutionContext, retryPolicy: RetryPolicy[F]): Stream[F, Unit] = {
 
     val program: Stream[F, Unit] = for {
-      githubClient <- GithubHttp4sApiClient.stream(gitConfig)
+      githubClient <- GithubHttp4sApiClient.stream(gitConfig, githubApiLimiter)
       repository <- GithubPostgresRepository.stream(dataSource)
       handler <- GithubDiscussionHandler.stream(eventQueue, githubClient, repository)
       _ <- Stream.awakeEvery[F](gitConfig.refreshInterval)
