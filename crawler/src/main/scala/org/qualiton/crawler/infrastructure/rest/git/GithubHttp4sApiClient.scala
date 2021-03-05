@@ -43,7 +43,7 @@ class GithubHttp4sApiClient[F[_] : Concurrent : Logger] private(
       Uri.unsafeFromString(baseUrl)
         .withPath(path)
         .withQueryParam("direction", "desc")
-        .withQueryParam("per_page", "100"), acceptHeader)
+        .withQueryParam("per_page", "50"), acceptHeader)
 
   private def prepareRequest(uri: Uri, acceptHeader: Header): Request[F] =
     Request[F](
@@ -91,25 +91,29 @@ class GithubHttp4sApiClient[F[_] : Concurrent : Logger] private(
 
   def getTeamDiscussionsUpdatedAfter(instant: Instant): Stream[F, TeamDiscussionAggregateRoot] = {
 
-    def filterDiscussions(teamDiscussionAggregateRoot: TeamDiscussionAggregateRoot): Stream[F, TeamDiscussionAggregateRoot] =
-      if (teamDiscussionAggregateRoot.lastUpdated.isAfter(instant)) {
-        Stream.eval(Logger[F].info(s"New item found in ${ teamDiscussionAggregateRoot.team.name } -> ${ teamDiscussionAggregateRoot.discussion.title }")) >>
-        Stream.emit(teamDiscussionAggregateRoot)
-      } else {
-        Stream.empty.covary
-      }
+    def filterDiscussions(teamDiscussionAggregateRoot: TeamDiscussionAggregateRoot): Boolean =
+      if (teamDiscussionAggregateRoot.lastUpdated.isAfter(instant))
+        true
+      else
+        false
 
-    val program = for {
+    def latestDiscussionsForATeam(team: UserTeamResponse): Stream[F, TeamDiscussionAggregateRoot] = {
+      val program = for {
+        discussion <- getTeamDiscussions(team.id)
+        comments <- getTeamDiscussionComments(team.id, discussion.number)
+        domainDiscussion <- DiscussionRestAssembler.toDomain(team, discussion, comments).stream
+      } yield domainDiscussion
+
+      program.takeWhile(filterDiscussions)
+    }
+
+    val allDiscussionsForAllTeams = for {
       team <- getUserTeams()
-      _ <- Stream.eval(Logger[F].info(s"Found team $team"))
-      discussion <- getTeamDiscussions(team.id)
-      _ <- Stream.eval(Logger[F].info(s"Found discussion $discussion"))
-      comments <- getTeamDiscussionComments(team.id, discussion.number)
-      domainDiscussion <- DiscussionRestAssembler.toDomain(team, discussion, comments).stream
-      filteredDomainDiscussion <- filterDiscussions(domainDiscussion)
-    } yield filteredDomainDiscussion
+      domainDiscussion <- latestDiscussionsForATeam(team)
+      _ <- Stream.eval(Logger[F].info(s"New item found in ${ domainDiscussion.team.name } -> ${ domainDiscussion.discussion.title }"))
+    } yield domainDiscussion
 
-    program.handleErrorWith(t => Stream.eval(Logger[F].error(t)("Error getting discussions!")) >> Stream.empty)
+    allDiscussionsForAllTeams.handleErrorWith(t => Stream.eval(Logger[F].error(t)("Error getting discussions!")) >> Stream.empty)
   }
 }
 
